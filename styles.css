@@ -161,6 +161,37 @@
 
 .vll-job-dismiss:hover { opacity: 1; }
 
+.vll-job-stream-preview {
+    margin: 6px 0 4px;
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+
+.vll-job-stream-input {
+    font-size: 0.82em;
+    color: var(--text-muted);
+    font-style: italic;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.vll-job-stream-output {
+    font-family: var(--font-monospace);
+    font-size: 0.75em;
+    color: var(--text-accent);
+    background: var(--background-primary-alt);
+    padding: 4px 8px;
+    border-radius: 4px;
+    white-space: pre-wrap;
+    word-break: break-all;
+    max-height: 72px;
+    overflow: hidden;
+    display: block;
+    line-height: 1.5;
+}
+
 /* ── 設定頁 ────────────────────────────────────────────────── */
 
 /* 進階設定折疊區 */

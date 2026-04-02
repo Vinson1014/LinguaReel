@@ -220,6 +220,22 @@ export class HomeView extends ItemView {
             prog.createEl('span', { text: `${job.done} / ${job.total}`, cls: 'vll-job-count' });
         }
 
+        // Streaming 預覽（LLM 即時輸出）
+        if (job.status === 'running' && job.currentSubtitle) {
+            const preview = card.createDiv({ cls: 'vll-job-stream-preview' });
+            preview.createEl('span', {
+                text: `▸ ${job.currentSubtitle}`,
+                cls:  'vll-job-stream-input',
+            });
+            if (job.currentOutput) {
+                // 只顯示最後 120 字元，避免卡片過長
+                const tail = job.currentOutput.length > 120
+                    ? '…' + job.currentOutput.slice(-120)
+                    : job.currentOutput;
+                preview.createEl('code', { text: tail, cls: 'vll-job-stream-output' });
+            }
+        }
+
         // 錯誤訊息
         if (job.status === 'failed' && job.error) {
             card.createEl('p', { text: job.error, cls: 'vll-job-error' });

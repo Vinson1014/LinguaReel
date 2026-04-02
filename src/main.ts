@@ -244,6 +244,14 @@ export default class VLLPlugin extends Plugin {
                 this.settings.annotationSystemPrompt,
             );
 
+            // Throttle streaming UI updates — 最多每 150ms 觸發一次 DOM 更新
+            let pendingEmit = false;
+            const scheduleEmit = () => {
+                if (pendingEmit) return;
+                pendingEmit = true;
+                window.setTimeout(() => { pendingEmit = false; this._emitJobUpdate(); }, 150);
+            };
+
             const pipeline = new AnnotationPipeline(this.llm);
             const result   = await pipeline.run(entries, {
                 systemPrompt,
@@ -253,6 +261,11 @@ export default class VLLPlugin extends Plugin {
                     job.done  = done;
                     job.total = total;
                     this._emitJobUpdate();
+                },
+                onToken: (subtitle, accumulated) => {
+                    job.currentSubtitle = subtitle;
+                    job.currentOutput   = accumulated;
+                    scheduleEmit();
                 },
             });
 

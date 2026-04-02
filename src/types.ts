@@ -147,6 +147,10 @@ export interface AnnotationJob {
     error?:      string;
     /** 呼叫此函式可中途取消任務 */
     abort?:      () => void;
+    /** 目前正在標注的字幕原文（streaming 預覽用） */
+    currentSubtitle?: string;
+    /** LLM 目前累積輸出的 partial JSON（streaming 預覽用） */
+    currentOutput?:   string;
 }
 
 /** 每個 LLM 供應商的連線設定，獨立儲存以支援切換 */

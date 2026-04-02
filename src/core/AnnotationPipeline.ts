@@ -28,6 +28,12 @@ export interface PipelineOptions {
     signal?: AbortSignal;
     /** 每批並行數（預設 3，本地模型可設 1） */
     batchSize?: number;
+    /**
+     * LLM 串流 token 回呼。
+     * subtitle = 目前送給 LLM 的字幕原文；accumulated = LLM 目前累積輸出。
+     * 批次並行時多條字幕會交錯呼叫，以最後收到的為準。
+     */
+    onToken?: (subtitle: string, accumulated: string) => void;
 }
 
 export interface PipelineResult {
@@ -58,7 +64,7 @@ export class AnnotationPipeline {
 
             const batch = entries.slice(i, i + batchSize);
             const batchResults = await Promise.all(
-                batch.map(entry => this.annotateOne(entry, options.systemPrompt))
+                batch.map(entry => this.annotateOne(entry, options.systemPrompt, options.signal, options.onToken))
             );
 
             for (const annotated of batchResults) {
@@ -100,12 +106,25 @@ export class AnnotationPipeline {
     // ─── 單條標註 ─────────────────────────────────────────────────────────
 
     private async annotateOne(
-        entry: ShadowingEntry,
+        entry:        ShadowingEntry,
         systemPrompt: string,
+        signal?:      AbortSignal,
+        onToken?:     (subtitle: string, accumulated: string) => void,
     ): Promise<AnnotatedEntry> {
         try {
             const messages = getAnnotationMessages(entry.text, systemPrompt);
-            const raw      = await this.llm.chatJSON<SubtitleAnnotation>(messages, 'fast');
+            let raw: SubtitleAnnotation;
+
+            if (onToken) {
+                raw = await this.llm.chatJSONStream<SubtitleAnnotation>(
+                    messages,
+                    'fast',
+                    (accumulated) => onToken(entry.text, accumulated),
+                    signal,
+                );
+            } else {
+                raw = await this.llm.chatJSON<SubtitleAnnotation>(messages, 'fast');
+            }
 
             const cleanAnnotations: AnnotationItem[] = (raw.annotations ?? [])
                 .filter(ann =>
