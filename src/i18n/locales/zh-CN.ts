@@ -218,6 +218,10 @@ const zhCN: Translations = {
         importVideo:      '导入视频',
         annotateNote:     '生成标注教材',
         noActiveFile:     '没有打开的文件，请先打开一个跟读笔记。',
+        jobs: {
+            title:   '标注任务',
+            dismiss: '关闭',
+        },
     },
 
     common: {

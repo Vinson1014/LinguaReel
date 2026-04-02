@@ -28,3 +28,5 @@ export const EVENT_LOOKUP_WORD = 'vll:lookup-word';
 export const EVENT_VOCAB_UPDATED = 'vll:vocab-updated';
 /** 閃卡複習完成事件 */
 export const EVENT_REVIEW_DONE = 'vll:review-done';
+/** 標注任務狀態更新事件（HomeView 訂閱此事件刷新 jobs section） */
+export const EVENT_ANNOTATION_JOB = 'vll:annotation-job-update';

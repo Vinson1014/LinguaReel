@@ -130,6 +130,25 @@ export type UILanguage    = 'auto' | 'en' | 'zh-TW' | 'zh-CN';
 export type WhisperModel  = 'tiny' | 'base' | 'small' | 'medium' | 'large' | 'large-v2' | 'large-v3';
 export type WhisperDevice = 'cpu' | 'cuda' | 'auto';
 
+// ===== 標注背景任務 =====
+
+export interface AnnotationJob {
+    id:          string;
+    /** 顯示用的檔案名稱（不含路徑） */
+    fileName:    string;
+    /** 完整 vault 路徑（用於重新開啟原始筆記） */
+    filePath:    string;
+    status:      'running' | 'done' | 'failed' | 'cancelled';
+    done:        number;
+    total:       number;
+    /** 標注完成後的 annotated note 路徑 */
+    resultPath?: string;
+    /** 失敗時的錯誤訊息 */
+    error?:      string;
+    /** 呼叫此函式可中途取消任務 */
+    abort?:      () => void;
+}
+
 /** 每個 LLM 供應商的連線設定，獨立儲存以支援切換 */
 export interface ProviderProfile {
     baseUrl:       string;

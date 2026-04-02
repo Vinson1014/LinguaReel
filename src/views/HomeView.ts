@@ -1,7 +1,8 @@
-import { ItemView, WorkspaceLeaf } from 'obsidian';
-import { VIEW_TYPE_HOME, VIEW_TYPE_DICT, VIEW_TYPE_HIGHLIGHT, VIEW_TYPE_FLASHCARD, VIEW_TYPE_SHADOWING } from '../constants';
+import { ItemView, TFile, WorkspaceLeaf } from 'obsidian';
+import { VIEW_TYPE_HOME, VIEW_TYPE_DICT, VIEW_TYPE_HIGHLIGHT, VIEW_TYPE_FLASHCARD, VIEW_TYPE_SHADOWING, EVENT_ANNOTATION_JOB } from '../constants';
 import { t } from '../i18n';
 import type VLLPlugin from '../main';
+import type { AnnotationJob } from '../types';
 
 /**
  * VLL 首頁 / Dashboard
@@ -16,6 +17,8 @@ export class HomeView extends ItemView {
 
     static readonly type = VIEW_TYPE_HOME;
 
+    private jobsEl!: HTMLElement;
+
     constructor(leaf: WorkspaceLeaf, private plugin: VLLPlugin) {
         super(leaf);
     }
@@ -24,7 +27,15 @@ export class HomeView extends ItemView {
     getDisplayText(): string { return t('home.viewTitle'); }
     getIcon(): string        { return 'layout-dashboard'; }
 
-    async onOpen(): Promise<void>  { await this.render(); }
+    async onOpen(): Promise<void> {
+        await this.render();
+        // 訂閱背景標注任務更新 — ItemView.registerEvent 會在關閉時自動取消訂閱
+        this.registerEvent(
+            // @ts-ignore — custom workspace event
+            this.app.workspace.on(EVENT_ANNOTATION_JOB, () => this.refreshJobs())
+        );
+    }
+
     async onClose(): Promise<void> { this.contentEl.empty(); }
 
     // ─── 渲染 ──────────────────────────────────────────────────────────────
@@ -35,9 +46,13 @@ export class HomeView extends ItemView {
         contentEl.addClass('vll-home-view');
 
         this.renderHeader(contentEl);
-        this.renderStatus(contentEl);          // 靜態佔位，非同步填入
+        this.renderStatus(contentEl);
         this.renderModuleGrid(contentEl);
         this.renderQuickActions(contentEl);
+
+        // 標注任務進度區（局部刷新，不重繪整頁）
+        this.jobsEl = contentEl.createDiv({ cls: 'vll-home-jobs' });
+        this.refreshJobs();
 
         // 非同步載入統計數字
         this.loadStats(contentEl);
@@ -164,5 +179,84 @@ export class HomeView extends ItemView {
             cls:  'vll-btn vll-home-annotate-btn',
         });
         annotateBtn.addEventListener('click', () => this.plugin.openAnnotateModal());
+    }
+
+    // ─── 標注任務進度（局部刷新）────────────────────────────────────────────
+
+    private refreshJobs(): void {
+        this.jobsEl.empty();
+        const jobs = this.plugin.annotationJobs;
+        if (jobs.length === 0) return;
+
+        this.jobsEl.createEl('h4', {
+            text: t('home.jobs.title'),
+            cls:  'vll-home-section-title',
+        });
+
+        for (const job of jobs) {
+            this.renderJobCard(this.jobsEl, job);
+        }
+    }
+
+    private renderJobCard(container: HTMLElement, job: AnnotationJob): void {
+        const card = container.createDiv({ cls: `vll-job-card vll-job-${job.status}` });
+
+        // 標頭：圖示 + 檔名
+        const icon: Record<AnnotationJob['status'], string> = {
+            running:   '⏳',
+            done:      '✅',
+            failed:    '❌',
+            cancelled: '🚫',
+        };
+        card.createDiv({ cls: 'vll-job-header' })
+            .createEl('span', { text: `${icon[job.status]} ${job.fileName}`, cls: 'vll-job-filename' });
+
+        // 進度條（僅 running 且 total 已知）
+        if (job.status === 'running' && job.total > 0) {
+            const pct  = Math.round((job.done / job.total) * 100);
+            const prog = card.createDiv({ cls: 'vll-job-progress' });
+            const bar  = prog.createDiv({ cls: 'vll-job-bar' });
+            bar.createDiv({ cls: 'vll-job-fill', attr: { style: `width: ${pct}%` } });
+            prog.createEl('span', { text: `${job.done} / ${job.total}`, cls: 'vll-job-count' });
+        }
+
+        // 錯誤訊息
+        if (job.status === 'failed' && job.error) {
+            card.createEl('p', { text: job.error, cls: 'vll-job-error' });
+        }
+
+        // 操作按鈕
+        const actions = card.createDiv({ cls: 'vll-job-actions' });
+
+        if (job.status === 'running') {
+            const cancelBtn = actions.createEl('button', { text: t('common.cancel'), cls: 'vll-btn' });
+            cancelBtn.addEventListener('click', () => job.abort?.());
+        }
+
+        if (job.status === 'done' && job.resultPath) {
+            const openBtn = actions.createEl('button', {
+                text: t('shadowing.openAnnotated'),
+                cls:  'vll-btn vll-btn-primary',
+            });
+            openBtn.addEventListener('click', async () => {
+                const f = this.app.vault.getAbstractFileByPath(job.resultPath!);
+                if (f instanceof TFile) {
+                    await this.app.workspace.getLeaf(false).openFile(f);
+                }
+            });
+        }
+
+        // 已完成 / 失敗 / 取消 → 顯示關閉按鈕
+        if (job.status !== 'running') {
+            const dismissBtn = actions.createEl('button', {
+                text:  '×',
+                cls:   'vll-btn vll-job-dismiss',
+                attr:  { title: t('home.jobs.dismiss') },
+            });
+            dismissBtn.addEventListener('click', () => {
+                this.plugin.annotationJobs = this.plugin.annotationJobs.filter(j => j.id !== job.id);
+                this.refreshJobs();
+            });
+        }
     }
 }

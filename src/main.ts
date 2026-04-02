@@ -1,4 +1,4 @@
-import { MarkdownView, Notice, Plugin, TFile, WorkspaceLeaf } from 'obsidian';
+import { MarkdownView, Notice, Plugin, TFile, WorkspaceLeaf, normalizePath } from 'obsidian';
 import { initI18n, t } from './i18n';
 import { DEFAULT_SETTINGS, VLLSettingTab } from './settings';
 import { VLLDatabase } from './db/database';
@@ -10,17 +10,21 @@ import { HighlightView } from './views/HighlightView';
 import { FlashcardView } from './views/FlashcardView';
 import { ShadowingView } from './views/ShadowingView';
 import { ImportModal } from './ui/ImportModal';
-import { AnnotateModal } from './ui/AnnotateModal';
 import { YtDlpRunner } from './core/YtDlpRunner';
 import { WhisperRunner } from './core/WhisperRunner';
+import { SubtitleParser } from './core/SubtitleParser';
+import { AnnotationPipeline } from './core/AnnotationPipeline';
+import { NoteGenerator } from './core/NoteGenerator';
+import { getAnnotationSystemPrompt } from './llm/prompts';
 import {
     VIEW_TYPE_HOME,
     VIEW_TYPE_DICT,
     VIEW_TYPE_HIGHLIGHT,
     VIEW_TYPE_FLASHCARD,
     VIEW_TYPE_SHADOWING,
+    EVENT_ANNOTATION_JOB,
 } from './constants';
-import type { VLLSettings, EnvironmentStatus } from './types';
+import type { AnnotationJob, VLLSettings, EnvironmentStatus } from './types';
 
 export default class VLLPlugin extends Plugin {
 
@@ -34,6 +38,9 @@ export default class VLLPlugin extends Plugin {
 
     /** 統一 LLM 客戶端 */
     llm!: LLMClient;
+
+    /** 背景標注任務清單（最新在前，HomeView 訂閱更新） */
+    annotationJobs: AnnotationJob[] = [];
 
     /** 外部工具狀態 */
     envStatus: EnvironmentStatus = {
@@ -109,11 +116,7 @@ export default class VLLPlugin extends Plugin {
         this.addCommand({
             id:       'annotate-shadowing-note',
             name:     t('commands.annotateNote'),
-            callback: () => {
-                const file = this.app.workspace.getActiveFile();
-                if (!file) return;
-                new AnnotateModal(this.app, this, file).open();
-            },
+            callback: () => this.openAnnotateModal(),
         });
 
         // 設定頁
@@ -198,14 +201,86 @@ export default class VLLPlugin extends Plugin {
         new ImportModal(this.app, this.settings, this.envStatus).open();
     }
 
-    /** 開啟標注教材 Modal（public，供 HomeView 呼叫） */
+    /** 啟動背景標注任務（public，供 HomeView 按鈕 / 指令面板呼叫） */
     openAnnotateModal(): void {
         const file = this.app.workspace.getActiveFile();
-        if (!file) {
-            new Notice(t('home.noActiveFile'));
-            return;
+        if (!file) { new Notice(t('home.noActiveFile')); return; }
+        if (!this.llm.isConfigured()) { new Notice(t('highlight.llmNotConfigured')); return; }
+        void this._runAnnotationJob(file);
+        void this.openView(VIEW_TYPE_HOME);  // 切換到 HomeView 讓用戶看到進度
+    }
+
+    private async _runAnnotationJob(file: TFile): Promise<void> {
+        const abort = new AbortController();
+        const job: AnnotationJob = {
+            id:       `job-${Date.now()}`,
+            fileName: file.basename,
+            filePath: file.path,
+            status:   'running',
+            done:     0,
+            total:    0,
+            abort:    () => abort.abort(),
+        };
+
+        this.annotationJobs.unshift(job);
+        this._emitJobUpdate();
+
+        try {
+            const noteContent = await this.app.vault.read(file);
+            const entries     = SubtitleParser.parseShadowingNote(noteContent);
+
+            if (entries.length === 0) {
+                job.status = 'failed';
+                job.error  = t('shadowing.noSubtitles');
+                this._emitJobUpdate();
+                return;
+            }
+
+            job.total = entries.length;
+            this._emitJobUpdate();
+
+            const systemPrompt = getAnnotationSystemPrompt(
+                this.settings.annotationLanguage,
+                this.settings.annotationSystemPrompt,
+            );
+
+            const pipeline = new AnnotationPipeline(this.llm);
+            const result   = await pipeline.run(entries, {
+                systemPrompt,
+                signal:    abort.signal,
+                batchSize: this.settings.annotationBatchSize,
+                onProgress: (done, total) => {
+                    job.done  = done;
+                    job.total = total;
+                    this._emitJobUpdate();
+                },
+            });
+
+            const header        = SubtitleParser.extractNoteHeader(noteContent);
+            const annotatedPath = normalizePath(NoteGenerator.annotatedNotePath(file.path));
+            const existing      = this.app.vault.getAbstractFileByPath(annotatedPath);
+            if (existing instanceof TFile) {
+                await this.app.vault.modify(existing, result.toMarkdown(header));
+            } else {
+                await this.app.vault.create(annotatedPath, result.toMarkdown(header));
+            }
+
+            job.status     = 'done';
+            job.resultPath = annotatedPath;
+
+        } catch (e) {
+            job.status = abort.signal.aborted ? 'cancelled' : 'failed';
+            if (!abort.signal.aborted) {
+                job.error = e instanceof Error ? e.message : String(e);
+            }
         }
-        new AnnotateModal(this.app, this, file).open();
+
+        this._emitJobUpdate();
+    }
+
+    private _emitJobUpdate(): void {
+        // @ts-ignore — custom workspace event，HomeView 以 registerEvent 訂閱
+        this.app.workspace.trigger(EVENT_ANNOTATION_JOB);
     }
 
     /** 觸發查詞（開啟 DictView 並查詢） */

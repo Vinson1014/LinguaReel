@@ -225,6 +225,10 @@ const en = {
         importVideo:      'Import Video',
         annotateNote:     'Generate Study Material',
         noActiveFile:     'No active file. Please open a shadowing note first.',
+        jobs: {
+            title:   'Annotation Jobs',
+            dismiss: 'Dismiss',
+        },
     },
 
     // ── 通用 ───────────────────────────────────────

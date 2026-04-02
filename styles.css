@@ -75,6 +75,92 @@
     margin: 6px 0;
 }
 
+/* ── HomeView 標注任務卡片 ─────────────────────────────────── */
+
+.vll-home-jobs {
+    margin-top: 16px;
+}
+
+.vll-home-section-title {
+    font-size: 0.8em;
+    font-weight: 600;
+    color: var(--text-muted);
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    margin: 0 0 8px;
+}
+
+.vll-job-card {
+    background: var(--background-secondary);
+    border-radius: 8px;
+    padding: 10px 14px;
+    margin-bottom: 8px;
+    border-left: 3px solid var(--background-modifier-border);
+}
+
+.vll-job-running   { border-left-color: var(--color-blue); }
+.vll-job-done      { border-left-color: var(--color-green); }
+.vll-job-failed    { border-left-color: var(--color-red); }
+.vll-job-cancelled { border-left-color: var(--text-faint); }
+
+.vll-job-header { margin-bottom: 6px; }
+
+.vll-job-filename {
+    font-size: 0.88em;
+    font-weight: 500;
+}
+
+.vll-job-progress {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin: 6px 0;
+}
+
+.vll-job-bar {
+    flex: 1;
+    height: 4px;
+    background: var(--background-modifier-border);
+    border-radius: 2px;
+    overflow: hidden;
+}
+
+.vll-job-fill {
+    height: 100%;
+    background: var(--color-blue);
+    border-radius: 2px;
+    transition: width 0.4s ease;
+}
+
+.vll-job-count {
+    font-size: 0.78em;
+    color: var(--text-muted);
+    white-space: nowrap;
+}
+
+.vll-job-error {
+    font-size: 0.82em;
+    color: var(--color-red);
+    margin: 4px 0 6px;
+}
+
+.vll-job-actions {
+    display: flex;
+    gap: 6px;
+    margin-top: 8px;
+    align-items: center;
+}
+
+.vll-job-dismiss {
+    margin-left: auto;
+    padding: 2px 8px;
+    font-size: 1.1em;
+    opacity: 0.5;
+    line-height: 1;
+}
+
+.vll-job-dismiss:hover { opacity: 1; }
+
 /* ── 設定頁 ────────────────────────────────────────────────── */
 
 /* 進階設定折疊區 */

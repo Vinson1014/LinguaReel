@@ -218,6 +218,10 @@ const zhTW: Translations = {
         importVideo:      '匯入影片',
         annotateNote:     '生成標註教材',
         noActiveFile:     '沒有開啟的檔案，請先開啟一個跟讀筆記。',
+        jobs: {
+            title:   '標注任務',
+            dismiss: '關閉',
+        },
     },
 
     common: {
