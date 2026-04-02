@@ -1,7 +1,17 @@
 import { App, PluginSettingTab, Setting } from 'obsidian';
 import type VLLPlugin from './main';
 import { t } from './i18n';
-import type { VLLSettings } from './types';
+import type { ProviderProfile, VLLSettings } from './types';
+
+// ===== Provider 預設值（首次切換時使用） =====
+
+export const PROVIDER_DEFAULTS: Record<string, ProviderProfile> = {
+    openai:     { baseUrl: 'https://api.openai.com/v1',                               apiKey: '', modelFast: 'gpt-4o-mini',             modelPowerful: 'gpt-4o' },
+    gemini:     { baseUrl: 'https://generativelanguage.googleapis.com/v1beta/openai',  apiKey: '', modelFast: 'gemini-2.0-flash',        modelPowerful: 'gemini-2.5-pro-exp-03-25' },
+    openrouter: { baseUrl: 'https://openrouter.ai/api/v1',                            apiKey: '', modelFast: 'google/gemini-flash-1.5',  modelPowerful: 'anthropic/claude-3.5-sonnet' },
+    ollama:     { baseUrl: 'http://localhost:11434/v1',                                apiKey: '', modelFast: 'llama3.2',                modelPowerful: '' },
+    custom:     { baseUrl: '',                                                          apiKey: '', modelFast: '',                        modelPowerful: '' },
+};
 
 // ===== 預設值 =====
 
@@ -15,6 +25,8 @@ export const DEFAULT_SETTINGS: VLLSettings = {
     vocabFolder:   'Vocabulary',
 
     // LLM
+    selectedProvider:       'openai',
+    providerProfiles:       {},
     llmBaseUrl:             'https://api.openai.com/v1',
     llmApiKey:              '',
     llmModelFast:           'gpt-4o-mini',
@@ -119,32 +131,33 @@ export class VLLSettingTab extends PluginSettingTab {
     private renderAI(el: HTMLElement) {
         el.createEl('h3', { text: t('settings.ai.title') });
 
-        // 快速選擇供應商
-        const presetSetting = new Setting(el)
-            .setName(t('settings.ai.quickSetup'))
-            .setDesc(t('settings.ai.quickSetupDesc'));
-        presetSetting.controlEl.addClass('vll-preset-controls');
-
-        const PRESETS: Array<{ label: string; baseUrl: string; fast: string; powerful: string }> = [
-            { label: 'OpenAI',     baseUrl: 'https://api.openai.com/v1',                              fast: 'gpt-4o-mini',              powerful: 'gpt-4o' },
-            { label: 'Gemini',     baseUrl: 'https://generativelanguage.googleapis.com/v1beta/openai', fast: 'gemini-2.0-flash',         powerful: 'gemini-2.5-pro-exp-03-25' },
-            { label: 'OpenRouter', baseUrl: 'https://openrouter.ai/api/v1',                           fast: 'google/gemini-flash-1.5',   powerful: 'anthropic/claude-3.5-sonnet' },
-            { label: 'Ollama',     baseUrl: 'http://localhost:11434/v1',                               fast: 'llama3.2',                 powerful: '' },
-        ];
-
-        for (const preset of PRESETS) {
-            const btn = presetSetting.controlEl.createEl('button', {
-                text: preset.label,
-                cls:  'vll-btn vll-preset-btn',
+        // 供應商下拉選單
+        new Setting(el)
+            .setName(t('settings.ai.provider'))
+            .setDesc(t('settings.ai.providerDesc'))
+            .addDropdown(dd => {
+                dd.addOption('openai',     t('settings.ai.provOpenAI'));
+                dd.addOption('gemini',     t('settings.ai.provGemini'));
+                dd.addOption('openrouter', t('settings.ai.provOpenRouter'));
+                dd.addOption('ollama',     t('settings.ai.provOllama'));
+                dd.addOption('custom',     t('settings.ai.provCustom'));
+                dd.setValue(this.plugin.settings.selectedProvider);
+                dd.onChange(async newProvider => {
+                    // 儲存目前供應商的設定
+                    this.saveCurrentProfile();
+                    // 切換到新供應商
+                    this.plugin.settings.selectedProvider = newProvider;
+                    const saved    = this.plugin.settings.providerProfiles[newProvider];
+                    const defaults = PROVIDER_DEFAULTS[newProvider] ?? { baseUrl: '', apiKey: '', modelFast: '', modelPowerful: '' };
+                    const profile  = saved ?? defaults;
+                    this.plugin.settings.llmBaseUrl       = profile.baseUrl;
+                    this.plugin.settings.llmApiKey        = profile.apiKey;
+                    this.plugin.settings.llmModelFast     = profile.modelFast;
+                    this.plugin.settings.llmModelPowerful = profile.modelPowerful;
+                    await this.plugin.saveSettings();
+                    this.display();
+                });
             });
-            btn.addEventListener('click', async () => {
-                this.plugin.settings.llmBaseUrl       = preset.baseUrl;
-                this.plugin.settings.llmModelFast     = preset.fast;
-                this.plugin.settings.llmModelPowerful = preset.powerful;
-                await this.plugin.saveSettings();
-                this.display();
-            });
-        }
 
         new Setting(el)
             .setName(t('settings.ai.baseUrl'))
@@ -153,7 +166,8 @@ export class VLLSettingTab extends PluginSettingTab {
                 .setPlaceholder('https://api.openai.com/v1')
                 .setValue(this.plugin.settings.llmBaseUrl)
                 .onChange(async v => {
-                    this.plugin.settings.llmBaseUrl = v.trim() || 'https://api.openai.com/v1';
+                    this.plugin.settings.llmBaseUrl = v.trim();
+                    this.saveCurrentProfile();
                     await this.plugin.saveSettings();
                 })
             );
@@ -168,6 +182,7 @@ export class VLLSettingTab extends PluginSettingTab {
                     .setValue(this.plugin.settings.llmApiKey)
                     .onChange(async v => {
                         this.plugin.settings.llmApiKey = v.trim();
+                        this.saveCurrentProfile();
                         await this.plugin.saveSettings();
                     });
             });
@@ -180,6 +195,7 @@ export class VLLSettingTab extends PluginSettingTab {
                 .setValue(this.plugin.settings.llmModelFast)
                 .onChange(async v => {
                     this.plugin.settings.llmModelFast = v.trim();
+                    this.saveCurrentProfile();
                     await this.plugin.saveSettings();
                 })
             );
@@ -192,6 +208,7 @@ export class VLLSettingTab extends PluginSettingTab {
                 .setValue(this.plugin.settings.llmModelPowerful)
                 .onChange(async v => {
                     this.plugin.settings.llmModelPowerful = v.trim();
+                    this.saveCurrentProfile();
                     await this.plugin.saveSettings();
                 })
             );
@@ -223,6 +240,17 @@ export class VLLSettingTab extends PluginSettingTab {
                     })
                 );
         }
+    }
+
+    /** 將目前作用中的設定儲存回 providerProfiles[selectedProvider] */
+    private saveCurrentProfile(): void {
+        const provider = this.plugin.settings.selectedProvider;
+        this.plugin.settings.providerProfiles[provider] = {
+            baseUrl:       this.plugin.settings.llmBaseUrl,
+            apiKey:        this.plugin.settings.llmApiKey,
+            modelFast:     this.plugin.settings.llmModelFast,
+            modelPowerful: this.plugin.settings.llmModelPowerful,
+        };
     }
 
     // ── 閃卡 ──────────────────────────────────────────────────────────────

@@ -130,6 +130,14 @@ export type UILanguage    = 'auto' | 'en' | 'zh-TW' | 'zh-CN';
 export type WhisperModel  = 'tiny' | 'base' | 'small' | 'medium' | 'large' | 'large-v2' | 'large-v3';
 export type WhisperDevice = 'cpu' | 'cuda' | 'auto';
 
+/** 每個 LLM 供應商的連線設定，獨立儲存以支援切換 */
+export interface ProviderProfile {
+    baseUrl:       string;
+    apiKey:        string;
+    modelFast:     string;
+    modelPowerful: string;
+}
+
 export interface VLLSettings {
     // ── 一般 ──────────────────────────────────────
     uiLanguage: UILanguage;
@@ -141,6 +149,11 @@ export interface VLLSettings {
     vocabFolder:   string;
 
     // ── LLM ───────────────────────────────────────
+    /** 目前選用的供應商 ID（'openai' | 'gemini' | 'openrouter' | 'ollama' | 'custom'） */
+    selectedProvider:       string;
+    /** 每個供應商各自記住的連線設定 */
+    providerProfiles:       Record<string, ProviderProfile>;
+    /** 目前作用中的設定（從 providerProfiles 載入） */
     llmBaseUrl:             string;
     llmApiKey:              string;
     llmModelFast:           string;
