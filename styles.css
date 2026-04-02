@@ -77,6 +77,39 @@
 
 /* ── 設定頁 ────────────────────────────────────────────────── */
 
+/* 進階設定折疊區 */
+.vll-advanced-section {
+    border: 1px solid var(--background-modifier-border);
+    border-radius: 6px;
+    margin: 12px 0 4px;
+    padding: 0 4px;
+}
+
+.vll-advanced-summary {
+    padding: 8px 12px;
+    cursor: pointer;
+    font-size: 0.88em;
+    color: var(--text-muted);
+    user-select: none;
+    list-style: none;
+}
+
+.vll-advanced-summary::-webkit-details-marker { display: none; }
+
+.vll-advanced-summary::before {
+    content: '▶ ';
+    font-size: 0.75em;
+    transition: transform 0.15s;
+}
+
+.vll-advanced-section[open] > .vll-advanced-summary::before {
+    content: '▼ ';
+}
+
+.vll-advanced-section[open] {
+    padding-bottom: 4px;
+}
+
 .vll-install-guide {
     background: var(--background-secondary);
     padding: 12px 16px;

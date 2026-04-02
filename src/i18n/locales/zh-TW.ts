@@ -56,6 +56,10 @@ const zhTW: Translations = {
             langCustom:         '自訂（使用下方 Prompt）',
             customPrompt:       '自訂標註 Prompt',
             customPromptDesc:   '標註語言設為「自訂」時使用的 system prompt',
+            advanced:           '⚙ 進階設定',
+            batchSize:          '標注並行批次數',
+            batchSizeDesc:      '每批同時送出的 API 請求數。預設 3（免費 tier 安全值）。付費 API 可設 10–20，速度顯著提升。',
+            batchSizeReset:     '重設為預設值（3）',
         },
         flashcard: {
             title:        '閃卡',

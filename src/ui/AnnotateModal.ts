@@ -107,7 +107,8 @@ export class AnnotateModal extends Modal {
             const pipeline = new AnnotationPipeline(this.plugin.llm);
             const result   = await pipeline.run(entries, {
                 systemPrompt,
-                signal: this.abortController.signal,
+                signal:     this.abortController.signal,
+                batchSize:  this.plugin.settings.annotationBatchSize,
                 onProgress: (done, total) => {
                     progressText.setText(t('shadowing.annotating', { done, total }));
                 },

@@ -33,6 +33,7 @@ export const DEFAULT_SETTINGS: VLLSettings = {
     llmModelPowerful:       '',
     annotationLanguage:     'ja',
     annotationSystemPrompt: '',
+    annotationBatchSize:    3,
 
     // 跟讀
     shadowingOutputFolder: 'Shadowing',
@@ -240,6 +241,35 @@ export class VLLSettingTab extends PluginSettingTab {
                     })
                 );
         }
+
+        // ── 進階設定（折疊） ──────────────────────────────────────────────
+        const details = el.createEl('details', { cls: 'vll-advanced-section' });
+        details.createEl('summary', {
+            text: t('settings.ai.advanced'),
+            cls:  'vll-advanced-summary',
+        });
+
+        new Setting(details)
+            .setName(t('settings.ai.batchSize'))
+            .setDesc(t('settings.ai.batchSizeDesc'))
+            .addSlider(sl => sl
+                .setLimits(1, 20, 1)
+                .setValue(this.plugin.settings.annotationBatchSize)
+                .setDynamicTooltip()
+                .onChange(async v => {
+                    this.plugin.settings.annotationBatchSize = v;
+                    await this.plugin.saveSettings();
+                })
+            )
+            .addExtraButton(btn => btn
+                .setIcon('reset')
+                .setTooltip(t('settings.ai.batchSizeReset'))
+                .onClick(async () => {
+                    this.plugin.settings.annotationBatchSize = 3;
+                    await this.plugin.saveSettings();
+                    this.display();
+                })
+            );
     }
 
     /** 將目前作用中的設定儲存回 providerProfiles[selectedProvider] */

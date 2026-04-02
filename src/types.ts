@@ -160,6 +160,8 @@ export interface VLLSettings {
     llmModelPowerful:       string;
     annotationLanguage:     string;
     annotationSystemPrompt: string;
+    /** 標注 Pipeline 每批並行請求數（1–20，預設 3）*/
+    annotationBatchSize:    number;
 
     // ── 跟讀 / 影片 ───────────────────────────────
     shadowingOutputFolder: string;

@@ -56,6 +56,10 @@ const zhCN: Translations = {
             langCustom:         '自定义（使用下方 Prompt）',
             customPrompt:       '自定义标注 Prompt',
             customPromptDesc:   '标注语言设为「自定义」时使用的 system prompt',
+            advanced:           '⚙ 高级设置',
+            batchSize:          '标注并行批次数',
+            batchSizeDesc:      '每批同时发送的 API 请求数。默认 3（免费 tier 安全值）。付费 API 可设 10–20，速度显著提升。',
+            batchSizeReset:     '重置为默认值（3）',
         },
         flashcard: {
             title:        '闪卡',

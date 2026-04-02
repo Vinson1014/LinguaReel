@@ -56,6 +56,10 @@ const en = {
             langCustom:         'Custom (use prompt below)',
             customPrompt:       'Custom Annotation Prompt',
             customPromptDesc:   'System prompt used when annotation language is set to Custom',
+            advanced:           '⚙ Advanced',
+            batchSize:          'Annotation Batch Size',
+            batchSizeDesc:      'Concurrent API requests per batch. Default 3 (safe for free-tier). Paid APIs can use 10–20 for much faster annotation.',
+            batchSizeReset:     'Reset to default (3)',
         },
         flashcard: {
             title:        'Flashcards',
