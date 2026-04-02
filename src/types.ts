@@ -125,7 +125,7 @@ export interface HighlightNote {
 
 // ===== 設定 =====
 
-export type DictSource    = 'youdao' | 'google' | 'bing' | 'local';
+export type DictSource    = 'none' | 'jisho' | 'weblio' | 'youdao' | 'google';
 export type UILanguage    = 'auto' | 'en' | 'zh-TW' | 'zh-CN';
 export type WhisperModel  = 'tiny' | 'base' | 'small' | 'medium' | 'large' | 'large-v2' | 'large-v3';
 export type WhisperDevice = 'cpu' | 'cuda' | 'auto';

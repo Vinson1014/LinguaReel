@@ -10,7 +10,7 @@ export const DEFAULT_SETTINGS: VLLSettings = {
     uiLanguage: 'auto',
 
     // 字典
-    dictSource:    'youdao',
+    dictSource:    'jisho',
     localDictPath: '',
     vocabFolder:   'Vocabulary',
 
@@ -89,25 +89,14 @@ export class VLLSettingTab extends PluginSettingTab {
             .setName(t('settings.dict.source'))
             .setDesc(t('settings.dict.sourceDesc'))
             .addDropdown(dd => dd
+                .addOption('none',   t('settings.dict.srcNone'))
+                .addOption('jisho',  t('settings.dict.srcJisho'))
+                .addOption('weblio', t('settings.dict.srcWeblio'))
                 .addOption('youdao', t('settings.dict.srcYoudao'))
                 .addOption('google', t('settings.dict.srcGoogle'))
-                .addOption('bing',   t('settings.dict.srcBing'))
-                .addOption('local',  t('settings.dict.srcLocal'))
                 .setValue(this.plugin.settings.dictSource)
                 .onChange(async v => {
                     this.plugin.settings.dictSource = v as VLLSettings['dictSource'];
-                    await this.plugin.saveSettings();
-                })
-            );
-
-        new Setting(el)
-            .setName(t('settings.dict.localPath'))
-            .setDesc(t('settings.dict.localPathDesc'))
-            .addText(text => text
-                .setPlaceholder('/path/to/dictionary.mdx')
-                .setValue(this.plugin.settings.localDictPath)
-                .onChange(async v => {
-                    this.plugin.settings.localDictPath = v.trim();
                     await this.plugin.saveSettings();
                 })
             );
@@ -129,6 +118,33 @@ export class VLLSettingTab extends PluginSettingTab {
 
     private renderAI(el: HTMLElement) {
         el.createEl('h3', { text: t('settings.ai.title') });
+
+        // 快速選擇供應商
+        const presetSetting = new Setting(el)
+            .setName(t('settings.ai.quickSetup'))
+            .setDesc(t('settings.ai.quickSetupDesc'));
+        presetSetting.controlEl.addClass('vll-preset-controls');
+
+        const PRESETS: Array<{ label: string; baseUrl: string; fast: string; powerful: string }> = [
+            { label: 'OpenAI',     baseUrl: 'https://api.openai.com/v1',                              fast: 'gpt-4o-mini',              powerful: 'gpt-4o' },
+            { label: 'Gemini',     baseUrl: 'https://generativelanguage.googleapis.com/v1beta/openai', fast: 'gemini-2.0-flash',         powerful: 'gemini-2.5-pro-exp-03-25' },
+            { label: 'OpenRouter', baseUrl: 'https://openrouter.ai/api/v1',                           fast: 'google/gemini-flash-1.5',   powerful: 'anthropic/claude-3.5-sonnet' },
+            { label: 'Ollama',     baseUrl: 'http://localhost:11434/v1',                               fast: 'llama3.2',                 powerful: '' },
+        ];
+
+        for (const preset of PRESETS) {
+            const btn = presetSetting.controlEl.createEl('button', {
+                text: preset.label,
+                cls:  'vll-btn vll-preset-btn',
+            });
+            btn.addEventListener('click', async () => {
+                this.plugin.settings.llmBaseUrl       = preset.baseUrl;
+                this.plugin.settings.llmModelFast     = preset.fast;
+                this.plugin.settings.llmModelPowerful = preset.powerful;
+                await this.plugin.saveSettings();
+                this.display();
+            });
+        }
 
         new Setting(el)
             .setName(t('settings.ai.baseUrl'))

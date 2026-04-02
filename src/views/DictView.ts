@@ -3,6 +3,7 @@ import { VIEW_TYPE_DICT } from '../constants';
 import { t } from '../i18n';
 import type VLLPlugin from '../main';
 import { getDictLookupMessages, type DictLookupResult } from '../llm/prompts';
+import type { DictSource } from '../types';
 
 /**
  * 查詞側邊欄
@@ -140,6 +141,18 @@ export class DictView extends ItemView {
     private renderActions(container: HTMLElement, word: string, data: DictLookupResult): void {
         const actions = container.createDiv({ cls: 'vll-dict-actions' });
 
+        // 外部參考字典連結
+        const extUrl = dictRefUrl(this.plugin.settings.dictSource, word);
+        if (extUrl) {
+            const srcLabel = this.plugin.settings.dictSource.charAt(0).toUpperCase()
+                           + this.plugin.settings.dictSource.slice(1);
+            const extBtn = actions.createEl('button', {
+                text: t('dict.viewExternal', { source: srcLabel }),
+                cls:  'vll-btn vll-dict-ext-btn',
+            });
+            extBtn.addEventListener('click', () => window.open(extUrl, '_blank'));
+        }
+
         const addBtn = actions.createEl('button', {
             text: t('dict.addToVocab'),
             cls:  'vll-btn vll-btn-primary',
@@ -199,5 +212,18 @@ export class DictView extends ItemView {
         } catch (e) {
             this.renderError(e instanceof Error ? e.message : String(e));
         }
+    }
+}
+
+// ─── Helpers ──────────────────────────────────────────────────────────────────
+
+function dictRefUrl(source: DictSource, word: string): string | null {
+    const q = encodeURIComponent(word);
+    switch (source) {
+        case 'jisho':   return `https://jisho.org/search/${q}`;
+        case 'weblio':  return `https://www.weblio.jp/content/${q}`;
+        case 'youdao':  return `https://dict.youdao.com/w/${q}`;
+        case 'google':  return `https://translate.google.com/?sl=auto&tl=zh-TW&text=${q}&op=translate`;
+        default:        return null;
     }
 }
