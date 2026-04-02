@@ -205,6 +205,8 @@ const zhTW: Translations = {
         descShadowing:    '影片跟讀 + AI 生成標註教材',
         open:             '開啟',
         importVideo:      '匯入影片',
+        annotateNote:     '生成標註教材',
+        noActiveFile:     '沒有開啟的檔案，請先開啟一個跟讀筆記。',
     },
 
     common: {

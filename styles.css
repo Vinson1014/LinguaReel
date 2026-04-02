@@ -243,6 +243,24 @@
     background: color-mix(in srgb, var(--vll-accent) 10%, transparent);
 }
 
+.vll-home-annotate-btn {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 0.85em;
+    padding: 6px 14px;
+    border-radius: 6px;
+    border: 1px dashed var(--color-green);
+    background: transparent;
+    color: var(--color-green);
+    cursor: pointer;
+    transition: background 0.15s;
+}
+
+.vll-home-annotate-btn:hover {
+    background: color-mix(in srgb, var(--color-green) 10%, transparent);
+}
+
 /* ── 查詞 View ─────────────────────────────────────────────── */
 
 .vll-dict-view {

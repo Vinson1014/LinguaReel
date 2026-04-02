@@ -212,6 +212,8 @@ const en = {
         descShadowing:    'Video shadowing & annotation',
         open:             'Open',
         importVideo:      'Import Video',
+        annotateNote:     'Generate Study Material',
+        noActiveFile:     'No active file. Please open a shadowing note first.',
     },
 
     // ── 通用 ───────────────────────────────────────

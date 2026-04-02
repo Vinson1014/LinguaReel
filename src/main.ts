@@ -1,4 +1,4 @@
-import { MarkdownView, Plugin, TFile, WorkspaceLeaf } from 'obsidian';
+import { MarkdownView, Notice, Plugin, TFile, WorkspaceLeaf } from 'obsidian';
 import { initI18n, t } from './i18n';
 import { DEFAULT_SETTINGS, VLLSettingTab } from './settings';
 import { VLLDatabase } from './db/database';
@@ -196,6 +196,16 @@ export default class VLLPlugin extends Plugin {
     /** 開啟影片匯入 Modal（public，供 HomeView 呼叫） */
     openImportModal(): void {
         new ImportModal(this.app, this.settings, this.envStatus).open();
+    }
+
+    /** 開啟標注教材 Modal（public，供 HomeView 呼叫） */
+    openAnnotateModal(): void {
+        const file = this.app.workspace.getActiveFile();
+        if (!file) {
+            new Notice(t('home.noActiveFile'));
+            return;
+        }
+        new AnnotateModal(this.app, this, file).open();
     }
 
     /** 觸發查詞（開啟 DictView 並查詢） */

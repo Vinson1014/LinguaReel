@@ -158,5 +158,11 @@ export class HomeView extends ItemView {
             cls:  'vll-btn vll-home-import-btn',
         });
         importBtn.addEventListener('click', () => this.plugin.openImportModal());
+
+        const annotateBtn = row.createEl('button', {
+            text: t('home.annotateNote'),
+            cls:  'vll-btn vll-home-annotate-btn',
+        });
+        annotateBtn.addEventListener('click', () => this.plugin.openAnnotateModal());
     }
 }

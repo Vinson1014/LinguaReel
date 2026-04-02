@@ -205,6 +205,8 @@ const zhCN: Translations = {
         descShadowing:    '视频跟读 + AI 生成标注教材',
         open:             '打开',
         importVideo:      '导入视频',
+        annotateNote:     '生成标注教材',
+        noActiveFile:     '没有打开的文件，请先打开一个跟读笔记。',
     },
 
     common: {
