@@ -11,31 +11,28 @@ import type { AnnotatedEntry } from '../types';
  */
 
 // ─── HTML 小工具 ──────────────────────────────────────────────────────────────
+// 使用 CSS class（定義於 styles.css）取代 inline style，支援深色/淺色主題自動適配
 
-/** 橙色虛線底線 span */
+/** 翻譯中重點詞：橙色虛線底線 */
 function spanUnderline(text: string): string {
-    return (
-        '<span style="text-decoration: underline dashed #FF7700; '
-      + `text-decoration-offset: 4px;">${text}</span>`
-    );
+    return `<span class="vll-ann-underline">${text}</span>`;
 }
 
 /** 小課堂 div（粉色左框） */
 function lessonDiv(key: string, explanation: string): string {
     return (
-        '<div style="border-left: 5px solid #F075AE; padding: 10px; '
-      + 'margin: 10px 0px; background-color: #FFF7F3; border-radius: 0 4px 4px 0;">'
-      + `<font color=69247>小課堂</font>：${spanUnderline(key)} ${explanation}`
+        '<div class="vll-ann-lesson">'
+      + `<span class="vll-ann-label vll-ann-lesson-label">小課堂</span>：`
+      + `<span class="vll-ann-key">${key}</span> ${explanation}`
       + '</div>'
     );
 }
 
-/** 翻譯 div（青色左框） */
+/** 翻譯 div（青色左框，包含所有小課堂） */
 function translationDiv(translationHtml: string, lessonsHtml: string): string {
     return (
-        '<div style="border-left: 5px solid #84D3D9; padding: 10px; '
-      + 'margin: 10px 0px; background-color: #F5F5F7; border-radius: 0 4px 4px 0;">'
-      + `<font color=355872>翻譯</font>：${translationHtml}`
+        '<div class="vll-ann-block">'
+      + `<span class="vll-ann-label vll-ann-translation-label">翻譯</span>：${translationHtml}`
       + lessonsHtml
       + '</div>'
     );
