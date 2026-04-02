@@ -1,8 +1,1402 @@
-/*
+/* ==========================================================
+   VLL - Video Language Learning
+   Base Styles
+   ========================================================== */
 
-This CSS file will be included with your plugin, and
-available in the app when your plugin is enabled.
+/* ── CSS 變數 ─────────────────────────────────────────────── */
 
-If your plugin does not need CSS, delete this file.
+.theme-dark {
+    --vll-accent:        #c084fc;  /* 紫色主色 */
+    --vll-accent-hover:  #d8b4fe;
+    --vll-card-bg:       rgba(255, 255, 255, 0.05);
+    --vll-card-border:   rgba(255, 255, 255, 0.10);
+    --vll-glass-bg:      rgba(30, 30, 40, 0.80);
+    --vll-highlight-yellow: rgba(255, 212, 0,  0.25);
+    --vll-highlight-pink:   rgba(255, 100, 150, 0.25);
+    --vll-highlight-blue:   rgba(100, 160, 255, 0.25);
+    --vll-highlight-green:  rgba(80,  200, 120, 0.25);
+}
 
-*/
+.theme-light {
+    --vll-accent:        #7c3aed;
+    --vll-accent-hover:  #6d28d9;
+    --vll-card-bg:       rgba(0, 0, 0, 0.03);
+    --vll-card-border:   rgba(0, 0, 0, 0.10);
+    --vll-glass-bg:      rgba(255, 255, 255, 0.90);
+    --vll-highlight-yellow: rgba(255, 200, 0,  0.30);
+    --vll-highlight-pink:   rgba(255, 80,  120, 0.25);
+    --vll-highlight-blue:   rgba(60,  130, 240, 0.25);
+    --vll-highlight-green:  rgba(40,  180, 90,  0.25);
+}
+
+/* ── 共用工具 ──────────────────────────────────────────────── */
+
+.vll-empty-state {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    height: 200px;
+    color: var(--text-muted);
+    font-size: 0.9em;
+    text-align: center;
+    padding: 16px;
+}
+
+.vll-loading {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    height: 80px;
+    color: var(--text-muted);
+    font-size: 0.9em;
+}
+
+.vll-btn-primary {
+    background: var(--vll-accent);
+    color: #fff;
+    border: none;
+    border-radius: 6px;
+    padding: 8px 20px;
+    cursor: pointer;
+    font-size: 0.9em;
+    transition: background 0.15s;
+}
+.vll-btn-primary:hover { background: var(--vll-accent-hover); }
+
+.vll-search-input {
+    width: 100%;
+    padding: 6px 10px;
+    border-radius: 6px;
+    border: 1px solid var(--background-modifier-border);
+    background: var(--background-primary);
+    color: var(--text-normal);
+    font-size: 0.9em;
+    margin: 6px 0;
+}
+
+/* ── 設定頁 ────────────────────────────────────────────────── */
+
+.vll-install-guide {
+    background: var(--background-secondary);
+    padding: 12px 16px;
+    border-radius: 8px;
+    font-size: 0.85em;
+    line-height: 2;
+}
+.vll-install-guide code {
+    background: var(--background-primary-alt);
+    padding: 1px 6px;
+    border-radius: 4px;
+}
+
+/* ── 首頁 / Dashboard ──────────────────────────────────────── */
+
+.vll-home-view {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+    padding: 16px 12px;
+    overflow-y: auto;
+    height: 100%;
+}
+
+.vll-home-header {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+}
+
+.vll-home-logo {
+    font-size: 1.6em;
+    font-weight: 700;
+    color: var(--vll-accent);
+    letter-spacing: 0.05em;
+}
+
+.vll-home-subtitle {
+    font-size: 0.78em;
+    color: var(--text-muted);
+    letter-spacing: 0.03em;
+}
+
+/* 狀態列 */
+.vll-home-status-bar {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+}
+
+.vll-status-chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    padding: 3px 10px;
+    border-radius: 999px;
+    font-size: 0.78em;
+    font-weight: 500;
+    white-space: nowrap;
+}
+
+.vll-chip-ok      { background: var(--color-green); color: #fff; }
+.vll-chip-warn    { background: var(--color-orange, #f59e0b); color: #fff; }
+.vll-chip-neutral { background: var(--background-modifier-border); color: var(--text-muted); }
+
+.vll-chip-link {
+    background: transparent;
+    border: none;
+    color: inherit;
+    text-decoration: underline;
+    cursor: pointer;
+    font-size: inherit;
+    padding: 0;
+}
+
+/* 模組卡片 2×2 格線 */
+.vll-home-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 10px;
+}
+
+.vll-home-card {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 6px;
+    padding: 12px 10px;
+    background: var(--vll-card-bg);
+    border: 1px solid var(--vll-card-border);
+    border-radius: 10px;
+    cursor: pointer;
+    transition: border-color 0.15s, box-shadow 0.15s;
+}
+
+.vll-home-card:hover {
+    border-color: var(--vll-accent);
+    box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+}
+
+.vll-home-card-icon {
+    width: 28px;
+    height: 28px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--vll-accent);
+}
+
+.vll-home-card-icon svg {
+    width: 20px;
+    height: 20px;
+}
+
+.vll-home-card-body {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    flex: 1;
+    width: 100%;
+}
+
+.vll-home-card-title {
+    font-size: 0.9em;
+    font-weight: 600;
+    color: var(--text-normal);
+}
+
+.vll-home-card-desc {
+    font-size: 0.74em;
+    color: var(--text-muted);
+    line-height: 1.4;
+}
+
+.vll-home-card-btn {
+    margin-top: 4px;
+    font-size: 0.78em;
+    padding: 3px 10px;
+    align-self: flex-end;
+}
+
+/* 快速動作列 */
+.vll-home-quick-actions {
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+}
+
+.vll-home-import-btn {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 0.85em;
+    padding: 6px 14px;
+    border-radius: 6px;
+    border: 1px dashed var(--vll-accent);
+    background: transparent;
+    color: var(--vll-accent);
+    cursor: pointer;
+    transition: background 0.15s;
+}
+
+.vll-home-import-btn:hover {
+    background: color-mix(in srgb, var(--vll-accent) 10%, transparent);
+}
+
+/* ── 查詞 View ─────────────────────────────────────────────── */
+
+.vll-dict-view {
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+    padding: 8px;
+    gap: 8px;
+}
+
+.vll-dict-search-row {
+    display: flex;
+    gap: 4px;
+}
+
+.vll-dict-search-input {
+    flex: 1;
+    padding: 4px 8px;
+    border: 1px solid var(--background-modifier-border);
+    border-radius: 4px;
+    background: var(--background-primary);
+    color: var(--text-normal);
+    font-size: 0.95em;
+}
+
+.vll-dict-search-btn {
+    padding: 4px 10px;
+    border-radius: 4px;
+    cursor: pointer;
+    background: var(--vll-accent);
+    color: #fff;
+    border: none;
+}
+
+.vll-dict-result {
+    flex: 1;
+    overflow-y: auto;
+}
+
+.vll-dict-loading {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 16px 4px;
+    color: var(--text-muted);
+}
+
+.vll-dict-error {
+    padding: 12px;
+    border-radius: 6px;
+    background: var(--background-modifier-error);
+    color: var(--text-error);
+    font-size: 0.88em;
+    word-break: break-word;
+}
+
+.vll-dict-card {
+    background: var(--vll-card-bg);
+    border: 1px solid var(--vll-card-border);
+    border-radius: 8px;
+    padding: 12px;
+}
+
+.vll-dict-header {
+    display: flex;
+    align-items: baseline;
+    gap: 8px;
+    flex-wrap: wrap;
+    margin-bottom: 8px;
+}
+
+.vll-dict-word {
+    font-size: 1.5em;
+    font-weight: 600;
+}
+
+.vll-dict-reading {
+    font-size: 0.95em;
+    color: var(--text-muted);
+}
+
+.vll-dict-pos {
+    display: inline-block;
+    background: var(--vll-accent);
+    color: #fff;
+    border-radius: 4px;
+    padding: 1px 8px;
+    font-size: 0.75em;
+}
+
+.vll-dict-definitions {
+    margin: 0 0 10px 16px;
+    padding: 0;
+    font-size: 0.95em;
+    line-height: 1.6;
+}
+
+.vll-dict-example {
+    border-left: 3px solid var(--vll-accent);
+    padding: 6px 10px;
+    margin: 8px 0;
+    background: var(--background-secondary);
+    border-radius: 0 4px 4px 0;
+}
+
+.vll-dict-ex-original {
+    margin: 0 0 2px;
+    font-style: italic;
+}
+
+.vll-dict-ex-translation {
+    margin: 0;
+    color: var(--text-muted);
+    font-size: 0.9em;
+}
+
+.vll-dict-notes {
+    margin-top: 8px;
+    padding: 6px 10px;
+    background: var(--background-secondary);
+    border-radius: 4px;
+    font-size: 0.88em;
+    color: var(--text-muted);
+    line-height: 1.5;
+}
+
+.vll-dict-actions {
+    display: flex;
+    gap: 8px;
+    margin-top: 12px;
+}
+
+/* 通用按鈕 */
+.vll-btn {
+    padding: 4px 14px;
+    border-radius: 4px;
+    border: 1px solid var(--background-modifier-border);
+    cursor: pointer;
+    font-size: 0.88em;
+}
+
+.vll-btn-primary {
+    background: var(--vll-accent);
+    color: #fff;
+    border-color: transparent;
+}
+
+.vll-btn-primary:disabled {
+    opacity: 0.5;
+    cursor: default;
+}
+
+/* 旋轉載入動畫 */
+.vll-spinner {
+    width: 16px;
+    height: 16px;
+    border: 2px solid var(--background-modifier-border);
+    border-top-color: var(--vll-accent);
+    border-radius: 50%;
+    animation: vll-spin 0.7s linear infinite;
+    flex-shrink: 0;
+}
+
+@keyframes vll-spin {
+    to { transform: rotate(360deg); }
+}
+
+/* ── 高亮筆記 View ──────────────────────────────────────────── */
+
+.vll-highlight-view {
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+}
+
+.vll-highlight-toolbar {
+    padding: 8px;
+    border-bottom: 1px solid var(--background-modifier-border);
+    flex-shrink: 0;
+}
+
+.vll-scope-row,
+.vll-color-filter-row {
+    display: flex;
+    gap: 4px;
+    margin-bottom: 6px;
+    flex-wrap: wrap;
+}
+
+.vll-scope-btn,
+.vll-color-btn {
+    padding: 3px 10px;
+    border-radius: 999px;
+    border: 1px solid var(--background-modifier-border);
+    background: transparent;
+    color: var(--text-normal);
+    cursor: pointer;
+    font-size: 0.8em;
+    transition: all 0.15s;
+}
+.vll-scope-btn.is-active,
+.vll-color-btn.is-active {
+    background: var(--vll-accent);
+    color: #fff;
+    border-color: var(--vll-accent);
+}
+
+.vll-highlight-list {
+    overflow-y: auto;
+    flex: 1;
+    padding: 8px;
+}
+
+.vll-highlight-card {
+    border-radius: 8px;
+    padding: 12px;
+    margin-bottom: 10px;
+    border-left: 3px solid transparent;
+}
+.vll-highlight-card.vll-color-yellow { background: var(--vll-highlight-yellow); border-left-color: #fbbf24; }
+.vll-highlight-card.vll-color-pink   { background: var(--vll-highlight-pink);   border-left-color: #f472b6; }
+.vll-highlight-card.vll-color-blue   { background: var(--vll-highlight-blue);   border-left-color: #60a5fa; }
+.vll-highlight-card.vll-color-green  { background: var(--vll-highlight-green);  border-left-color: #34d399; }
+
+.vll-card-text {
+    margin: 0 0 6px;
+    line-height: 1.6;
+    font-size: 0.9em;
+}
+
+.vll-card-source {
+    display: block;
+    color: var(--text-muted);
+    font-size: 0.78em;
+    cursor: pointer;
+    margin-bottom: 8px;
+}
+.vll-card-source:hover { color: var(--vll-accent); }
+
+.vll-card-actions {
+    display: flex;
+    gap: 6px;
+    flex-wrap: wrap;
+}
+
+.vll-card-btn {
+    padding: 2px 8px;
+    border-radius: 4px;
+    border: 1px solid var(--background-modifier-border);
+    background: var(--background-primary);
+    color: var(--text-normal);
+    cursor: pointer;
+    font-size: 0.78em;
+    transition: all 0.15s;
+}
+.vll-card-btn:hover {
+    background: var(--vll-accent);
+    color: #fff;
+    border-color: var(--vll-accent);
+}
+.vll-card-btn-danger:hover {
+    background: #ef4444;
+    border-color: #ef4444;
+}
+
+.vll-card-context {
+    margin: 0 0 4px;
+    font-size: 0.78em;
+    color: var(--text-muted);
+    font-style: italic;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+/* ── AI result area ────────────────────────────────────────── */
+
+.vll-hidden { display: none !important; }
+
+.vll-card-ai-area {
+    margin-top: 8px;
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+
+.vll-ai-translation {
+    background: var(--background-secondary);
+    border-radius: 6px;
+    padding: 8px 10px;
+    font-size: 0.85em;
+    line-height: 1.6;
+}
+
+.vll-ai-row {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 4px;
+}
+
+.vll-ai-label {
+    font-weight: 600;
+    color: var(--vll-accent);
+    flex-shrink: 0;
+}
+
+.vll-ai-note {
+    color: var(--text-muted);
+    font-size: 0.9em;
+    margin-top: 2px;
+}
+
+.vll-ai-error {
+    color: #ef4444;
+    font-size: 0.82em;
+    margin: 4px 0 0;
+}
+
+.vll-ai-research {
+    border-radius: 6px;
+    overflow: hidden;
+    border: 1px solid var(--background-modifier-border);
+}
+
+.vll-ai-research-toggle {
+    width: 100%;
+    text-align: left;
+    padding: 6px 10px;
+    background: var(--background-secondary);
+    color: var(--text-normal);
+    border: none;
+    cursor: pointer;
+    font-size: 0.83em;
+    font-weight: 600;
+    transition: background 0.1s;
+}
+.vll-ai-research-toggle:hover { background: var(--background-modifier-hover); }
+
+.vll-ai-research-body {
+    padding: 8px 10px;
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    font-size: 0.84em;
+    line-height: 1.6;
+}
+
+.vll-research-item {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 4px;
+    align-items: baseline;
+}
+
+.vll-research-examples {
+    margin: 4px 0 0 16px;
+    padding: 0;
+    font-size: 0.92em;
+    line-height: 1.7;
+    width: 100%;
+}
+
+.vll-research-tag {
+    background: var(--background-modifier-border);
+    border-radius: 4px;
+    padding: 1px 6px;
+    font-size: 0.88em;
+}
+
+.vll-research-cultural {
+    color: var(--text-muted);
+    font-size: 0.9em;
+}
+
+/* ── 閃卡 View ──────────────────────────────────────────────── */
+
+.vll-flashcard-view {
+    padding: 12px;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.vll-flashcard-stats {
+    display: flex;
+    gap: 12px;
+    justify-content: center;
+    padding: 8px;
+    background: var(--background-secondary);
+    border-radius: 8px;
+}
+
+.vll-stat-item {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 2px;
+}
+.vll-stat-count {
+    font-size: 1.3em;
+    font-weight: 700;
+    color: var(--vll-accent);
+}
+.vll-stat-label {
+    font-size: 0.75em;
+    color: var(--text-muted);
+}
+
+/* 3D 翻牌效果 */
+.vll-card-flipper {
+    perspective: 1000px;
+    position: relative;
+    min-height: 200px;
+}
+
+.vll-card-face {
+    position: absolute;
+    width: 100%;
+    min-height: 200px;
+    backface-visibility: hidden;
+    background: var(--vll-card-bg);
+    border: 1px solid var(--vll-card-border);
+    border-radius: 12px;
+    padding: 24px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    transition: transform 0.5s;
+}
+
+.vll-card-back  { transform: rotateY(180deg); }
+.vll-card-flipper.is-flipped .vll-card-front { transform: rotateY(-180deg); }
+.vll-card-flipper.is-flipped .vll-card-back  { transform: rotateY(0deg); }
+
+.vll-card-word     { font-size: 1.6em; font-weight: 700; margin: 0 0 8px; }
+.vll-card-phonetic { color: var(--text-muted); font-size: 0.9em; }
+.vll-card-pos      { display: inline-block; background: var(--vll-accent); color: #fff; border-radius: 4px; padding: 1px 8px; font-size: 0.78em; margin-bottom: 8px; }
+.vll-card-defs     { list-style: none; padding: 0; margin: 0; text-align: left; font-size: 0.9em; }
+.vll-card-defs li  { margin-bottom: 4px; }
+.vll-card-defs li::before { content: '• '; color: var(--vll-accent); }
+.vll-card-example  { color: var(--text-muted); font-style: italic; font-size: 0.85em; margin-top: 8px; }
+
+.vll-card-actions {
+    display: flex;
+    gap: 8px;
+    justify-content: center;
+    margin-top: 12px;
+    flex-wrap: wrap;
+}
+
+.vll-rating-btn {
+    padding: 8px 20px;
+    border-radius: 8px;
+    border: none;
+    cursor: pointer;
+    font-size: 0.9em;
+    font-weight: 600;
+    transition: opacity 0.15s;
+}
+.vll-rating-btn:hover { opacity: 0.85; }
+.vll-rating-1 { background: #ef4444; color: #fff; }
+.vll-rating-2 { background: #f97316; color: #fff; }
+.vll-rating-3 { background: #22c55e; color: #fff; }
+.vll-rating-4 { background: #3b82f6; color: #fff; }
+
+/* ── 跟讀 View ──────────────────────────────────────────────── */
+
+.vll-shadowing-view {
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+    padding: 16px;
+    gap: 12px;
+    overflow-y: auto;
+    /* Centre the content and cap width for readability */
+    max-width: 860px;
+    margin: 0 auto;
+    width: 100%;
+}
+
+.vll-shadowing-header {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.vll-shadowing-title {
+    font-size: 1em;
+    font-weight: 600;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    flex: 1;
+}
+
+.vll-shadowing-status {
+    font-size: 0.85em;
+    color: var(--text-muted);
+}
+
+/* ── Video player ───────────────────────────────────────────── */
+
+.vll-video-wrapper {
+    width: 100%;
+    border-radius: 8px;
+    background: #000;
+    /* No overflow:hidden — let the video determine its own height */
+}
+
+/* Local <video>: natural aspect ratio, capped small so subtitles get more room */
+.vll-video-wrapper > .vll-local-video {
+    display: block;
+    width: 100%;
+    height: auto;
+    max-height: 30vh;
+    object-fit: contain;
+    border: none;
+}
+
+/* YouTube player: needs an explicit 16:9 container because the injected
+   <iframe> has no intrinsic dimensions */
+.vll-video-wrapper > .vll-yt-player {
+    display: block;
+    width: 100%;
+    aspect-ratio: 16 / 9;
+    max-height: 30vh;
+    border: none;
+}
+
+/* YouTube IFrame API injects an <iframe> inside .vll-yt-player */
+.vll-yt-player iframe {
+    width: 100%;
+    height: 100%;
+    border: none;
+}
+
+.vll-video-placeholder {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    height: 60px;
+    border: 1px dashed var(--background-modifier-border);
+    border-radius: 8px;
+}
+
+/* ── Player controls ────────────────────────────────────────── */
+
+.vll-player-controls {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    flex-wrap: wrap;
+}
+
+.vll-ctrl-btn {
+    padding: 4px 10px;
+    border-radius: 6px;
+    border: 1px solid var(--background-modifier-border);
+    background: var(--background-primary);
+    color: var(--text-normal);
+    cursor: pointer;
+    font-size: 0.85em;
+    transition: all 0.15s;
+    min-width: 36px;
+    text-align: center;
+}
+.vll-ctrl-btn:hover { background: var(--vll-accent); color: #fff; border-color: var(--vll-accent); }
+.vll-ctrl-btn.is-active { background: var(--vll-accent); color: #fff; border-color: var(--vll-accent); }
+
+.vll-ctrl-playpause { font-size: 1em; min-width: 42px; }
+
+.vll-mode-row {
+    display: flex;
+    gap: 4px;
+}
+
+/* ── Subtitle list ──────────────────────────────────────────── */
+
+.vll-subtitle-list {
+    flex: 1;
+    overflow-y: auto;
+    min-height: 120px;
+    max-height: 400px;
+    border: 1px solid var(--background-modifier-border);
+    border-radius: 6px;
+}
+
+.vll-sub-row {
+    display: flex;
+    gap: 8px;
+    padding: 5px 8px;
+    border-bottom: 1px solid var(--background-modifier-border);
+    font-size: 0.85em;
+    line-height: 1.5;
+    transition: background 0.15s;
+    cursor: default;
+}
+.vll-sub-row:last-child { border-bottom: none; }
+.vll-sub-row.is-active {
+    background: rgba(var(--interactive-accent-rgb), 0.15);
+    border-left: 3px solid var(--interactive-accent);
+    padding-left: 5px;
+}
+
+.vll-sub-ts {
+    color: var(--vll-accent);
+    font-family: monospace;
+    font-size: 0.85em;
+    flex-shrink: 0;
+    cursor: pointer;
+    opacity: 0.8;
+}
+.vll-sub-ts:hover { opacity: 1; text-decoration: underline; }
+
+.vll-sub-text { flex: 1; }
+
+.vll-sub-blurred {
+    filter: blur(4px);
+    user-select: none;
+    transition: filter 0.3s;
+}
+
+/* ── Scrollable blocks list ─────────────────────────────────── */
+
+.vll-shadowing-view {
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+    overflow: hidden;
+}
+
+.vll-blocks-container {
+    flex: 1;
+    overflow-y: auto;
+    min-height: 0;   /* required for flex child to scroll */
+    padding: 4px 0 24px;
+    user-select: text;
+    -webkit-user-select: text;
+}
+
+.vll-block-text,
+.vll-block-annotation {
+    user-select: text;
+    -webkit-user-select: text;
+    cursor: text;
+}
+
+.vll-shadowing-item {
+    padding: 10px 14px;
+    border-left: 3px solid transparent;
+    border-radius: 0 6px 6px 0;
+    transition: background 0.12s, border-color 0.12s;
+    cursor: default;
+}
+
+.vll-shadowing-item.active {
+    background: var(--background-secondary);
+    border-left-color: var(--color-accent);
+}
+
+.vll-shadowing-item:hover {
+    background: var(--background-secondary-alt);
+}
+
+.vll-block-ts {
+    display: inline-block;
+    font-family: var(--font-monospace);
+    font-size: 0.82em;
+    color: var(--text-muted);
+    cursor: pointer;
+    margin-bottom: 5px;
+}
+
+.vll-block-ts:hover {
+    color: var(--color-accent);
+    text-decoration: underline;
+}
+
+.vll-block-text {
+    font-size: 1.05em;
+    line-height: 1.8;
+    color: var(--text-normal);
+    word-break: break-all;
+}
+
+.vll-block-annotation {
+    margin-top: 10px;
+    font-size: 0.95em;
+    line-height: 1.75;
+}
+
+.vll-block-annotation div {
+    box-sizing: border-box;
+}
+
+.vll-sub-placeholder {
+    color: var(--text-muted);
+    font-size: 0.9em;
+}
+
+/* ── Annotate Modal ─────────────────────────────────────────── */
+
+/* ── Selection popup ────────────────────────────────────────── */
+
+.vll-selection-popup {
+    position: fixed;
+    z-index: 9999;
+    transform: translate(-50%, -100%);
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    padding: 5px 8px;
+    background: var(--background-primary);
+    border: 1px solid var(--background-modifier-border);
+    border-radius: 8px;
+    box-shadow: 0 4px 16px rgba(0,0,0,0.2);
+    pointer-events: all;
+}
+
+.vll-popup-btn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 28px;
+    height: 28px;
+    padding: 0;
+    border: none;
+    border-radius: 5px;
+    background: transparent;
+    color: var(--text-normal);
+    cursor: pointer;
+    transition: background 0.12s;
+}
+.vll-popup-btn:hover {
+    background: var(--background-modifier-hover);
+}
+
+.vll-popup-divider {
+    width: 1px;
+    height: 20px;
+    background: var(--background-modifier-border);
+    margin: 0 2px;
+}
+
+.vll-popup-color {
+    width: 18px;
+    height: 18px;
+    border-radius: 50%;
+    border: 2px solid transparent;
+    cursor: pointer;
+    padding: 0;
+    transition: transform 0.1s, border-color 0.1s;
+}
+.vll-popup-color:hover {
+    transform: scale(1.25);
+    border-color: var(--text-muted);
+}
+
+/* ── Annotate Modal ─────────────────────────────────────────── */
+
+/* ── FlashcardView ──────────────────────────────────────────── */
+
+.vll-flashcard-view {
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+    padding: 12px;
+    gap: 12px;
+    overflow-y: auto;
+}
+
+/* Stats bar */
+.vll-fc-stats {
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+}
+
+/* Card */
+.vll-fc-card {
+    border: 1px solid var(--background-modifier-border);
+    border-radius: 12px;
+    overflow: hidden;
+}
+
+.vll-fc-front {
+    padding: 32px 24px 24px;
+    text-align: center;
+    background: var(--background-primary);
+}
+
+.vll-fc-word {
+    font-size: 2.2em;
+    font-weight: 700;
+    color: var(--text-normal);
+    margin-bottom: 8px;
+}
+
+.vll-fc-reading {
+    font-size: 1em;
+    color: var(--text-muted);
+    margin-bottom: 12px;
+}
+
+.vll-fc-state-badge {
+    display: inline-block;
+    font-size: 0.68em;
+    font-weight: 700;
+    letter-spacing: 0.05em;
+    padding: 2px 8px;
+    border-radius: 4px;
+    background: var(--background-modifier-border);
+    color: var(--text-muted);
+}
+
+.vll-fc-show-btn {
+    width: 100%;
+    padding: 12px;
+    font-size: 1em;
+}
+
+/* Back */
+.vll-fc-back {
+    padding: 16px 20px;
+    background: var(--background-secondary);
+    border-top: 1px solid var(--background-modifier-border);
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.vll-fc-defs {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+
+.vll-fc-pos {
+    font-size: 0.78em;
+    color: var(--text-accent);
+    font-weight: 600;
+    text-transform: uppercase;
+    margin-bottom: 2px;
+}
+
+.vll-fc-def-item {
+    font-size: 1.05em;
+    line-height: 1.6;
+}
+
+.vll-fc-example {
+    font-size: 0.9em;
+    color: var(--text-muted);
+    font-style: italic;
+}
+.vll-fc-example-label { font-style: normal; font-weight: 600; }
+
+.vll-fc-context {
+    font-size: 0.85em;
+    color: var(--text-muted);
+    border-left: 3px solid var(--background-modifier-border);
+    padding-left: 8px;
+}
+
+.vll-fc-source {
+    font-size: 0.78em;
+    color: var(--text-faint);
+}
+
+/* Rating bar */
+.vll-fc-rating-bar {
+    display: flex;
+    gap: 8px;
+}
+
+.vll-fc-btn-wrap {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 4px;
+}
+
+.vll-fc-interval-hint {
+    font-size: 0.72em;
+    color: var(--text-muted);
+}
+
+.vll-fc-rating-btn {
+    width: 100%;
+    padding: 10px 4px;
+    font-size: 0.88em;
+    font-weight: 600;
+    border-radius: 8px;
+}
+
+.vll-fc-btn-again { background: #ef444422; color: #ef4444; border: 1px solid #ef444444; }
+.vll-fc-btn-hard  { background: #f9731622; color: #f97316; border: 1px solid #f9731644; }
+.vll-fc-btn-good  { background: #22c55e22; color: #22c55e; border: 1px solid #22c55e44; }
+.vll-fc-btn-easy  { background: #3b82f622; color: #3b82f6; border: 1px solid #3b82f644; }
+.vll-fc-btn-again:hover { background: #ef444444; }
+.vll-fc-btn-hard:hover  { background: #f9731644; }
+.vll-fc-btn-good:hover  { background: #22c55e44; }
+.vll-fc-btn-easy:hover  { background: #3b82f644; }
+
+/* Empty state */
+.vll-fc-empty {
+    text-align: center;
+    padding: 32px 16px;
+}
+.vll-fc-empty-icon { font-size: 3em; margin-bottom: 8px; }
+.vll-fc-empty-text { font-size: 1em; color: var(--text-muted); }
+
+/* Heatmap */
+.vll-fc-heatmap-wrap { margin-top: 16px; }
+.vll-fc-heatmap-title { margin: 0 0 8px; font-size: 0.85em; color: var(--text-muted); }
+
+.vll-heatmap-grid {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 2px;
+}
+
+.vll-heatmap-cell {
+    width: 11px;
+    height: 11px;
+    border-radius: 2px;
+    background: var(--background-modifier-border);
+}
+.vll-heat-1 { background: #22c55e55; }
+.vll-heat-2 { background: #22c55e88; }
+.vll-heat-3 { background: #22c55ebb; }
+.vll-heat-4 { background: #22c55e; }
+
+/* ── Annotate Modal ─────────────────────────────────────────── */
+
+.vll-annotate-filename {
+    color: var(--text-muted);
+    font-size: 0.9em;
+    margin: 0 0 12px;
+}
+
+.vll-annotate-modal-progress {
+    margin: 12px 0;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.vll-annotate-modal-btns {
+    display: flex;
+    justify-content: flex-end;
+    gap: 8px;
+    margin-top: 12px;
+}
+
+/* ── Annotate section ───────────────────────────────────────── */
+
+.vll-annotate-section {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.vll-annotate-progress {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    flex-wrap: wrap;
+    font-size: 0.88em;
+}
+
+.vll-annotate-progress.vll-hidden {
+    display: none;
+}
+
+.vll-progress-text {
+    flex: 1;
+    color: var(--text-muted);
+}
+
+.vll-annotation-success {
+    color: var(--color-green);
+    font-size: 0.88em;
+}
+
+.vll-subtitle-preview {
+    border: 1px solid var(--background-modifier-border);
+    border-radius: 6px;
+    overflow-y: auto;
+    max-height: 320px;
+}
+
+.vll-subtitle-row {
+    display: flex;
+    gap: 8px;
+    padding: 4px 8px;
+    border-bottom: 1px solid var(--background-modifier-border);
+    font-size: 0.85em;
+    line-height: 1.5;
+}
+
+.vll-subtitle-row:last-child {
+    border-bottom: none;
+}
+
+.vll-sub-ts {
+    color: var(--vll-accent);
+    font-family: monospace;
+    flex-shrink: 0;
+    font-size: 0.9em;
+}
+
+.vll-sub-text {
+    color: var(--text-normal);
+    overflow: hidden;
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+}
+
+.vll-text-muted {
+    color: var(--text-muted);
+    font-size: 0.85em;
+}
+
+.vll-video-container {
+    background: #000;
+    aspect-ratio: 16 / 9;
+    flex-shrink: 0;
+    width: 100%;
+    border-radius: 8px;
+    overflow: hidden;
+}
+
+.vll-video-container iframe,
+.vll-video-container video {
+    width: 100%;
+    height: 100%;
+    border: none;
+}
+
+.vll-controls {
+    padding: 8px;
+    border-bottom: 1px solid var(--background-modifier-border);
+    flex-shrink: 0;
+}
+
+.vll-mode-row,
+.vll-speed-row,
+.vll-rewind-row {
+    display: flex;
+    gap: 6px;
+    margin-bottom: 6px;
+    flex-wrap: wrap;
+}
+
+.vll-mode-btn,
+.vll-speed-btn,
+.vll-rewind-btn {
+    padding: 4px 12px;
+    border-radius: 6px;
+    border: 1px solid var(--background-modifier-border);
+    background: transparent;
+    color: var(--text-normal);
+    cursor: pointer;
+    font-size: 0.85em;
+    transition: all 0.15s;
+}
+.vll-mode-btn.is-active,
+.vll-speed-btn.is-active {
+    background: var(--vll-accent);
+    color: #fff;
+    border-color: var(--vll-accent);
+}
+.vll-rewind-btn:hover,
+.vll-mode-btn:hover:not(.is-active),
+.vll-speed-btn:hover:not(.is-active) {
+    background: var(--background-modifier-hover);
+}
+
+.vll-subtitle-list {
+    overflow-y: auto;
+    flex: 1;
+    padding: 12px;
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+
+.vll-subtitle-item {
+    display: flex;
+    gap: 10px;
+    padding: 6px 8px;
+    border-radius: 6px;
+    cursor: pointer;
+    transition: background 0.12s;
+    font-size: 0.9em;
+}
+.vll-subtitle-item:hover { background: var(--background-modifier-hover); }
+.vll-subtitle-item.is-active {
+    background: var(--vll-accent);
+    color: #fff;
+}
+
+.vll-subtitle-timestamp {
+    color: var(--text-muted);
+    font-family: monospace;
+    font-size: 0.8em;
+    flex-shrink: 0;
+    padding-top: 2px;
+}
+.vll-subtitle-item.is-active .vll-subtitle-timestamp { color: rgba(255,255,255,0.7); }
+
+/* ── 匯入 Modal ─────────────────────────────────────────────── */
+
+.vll-import-modal .setting-item-control input[type="text"] {
+    width: 100%;
+    min-width: 320px;
+}
+
+.vll-tool-status {
+    background: var(--background-secondary);
+    padding: 10px 14px;
+    border-radius: 8px;
+    margin: 10px 0;
+    font-size: 0.85em;
+    line-height: 1.8;
+}
+
+.vll-tool-status-title {
+    font-weight: 700;
+    margin-bottom: 2px;
+}
+
+.vll-tier-info {
+    margin-top: 4px;
+    color: var(--text-muted);
+    font-size: 0.9em;
+}
+
+.vll-import-progress {
+    padding: 8px;
+    background: var(--background-secondary);
+    border-radius: 6px;
+    margin: 8px 0;
+    font-size: 0.9em;
+    color: var(--text-muted);
+}
+
+.vll-import-status {
+    min-height: 24px;
+    font-size: 0.9em;
+    margin: 4px 0;
+}
