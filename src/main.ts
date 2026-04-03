@@ -307,19 +307,22 @@ export default class VLLPlugin extends Plugin {
                 },
             });
 
-            // 若有摘要，將 ai_summary 注入 annotated note 的 frontmatter
-            let header = SubtitleParser.extractNoteHeader(noteContent);
-            if (contentSummary) {
-                const cleanSummary = contentSummary.summary.replace(/"/g, "'");
-                // 在 frontmatter 結尾插入 ai_summary 欄位
-                header = header.replace(/(\n---\s*\n)/, `\nai_summary: "${cleanSummary}"$1`);
-            }
+            const header        = SubtitleParser.extractNoteHeader(noteContent);
             const annotatedPath = normalizePath(NoteGenerator.annotatedNotePath(file.path));
             const existing      = this.app.vault.getAbstractFileByPath(annotatedPath);
+            let annotatedFile: TFile;
             if (existing instanceof TFile) {
                 await this.app.vault.modify(existing, result.toMarkdown(header));
+                annotatedFile = existing;
             } else {
-                await this.app.vault.create(annotatedPath, result.toMarkdown(header));
+                annotatedFile = await this.app.vault.create(annotatedPath, result.toMarkdown(header));
+            }
+
+            // 用 processFrontMatter 寫入 ai_summary，避免手動 regex 造成重複欄位
+            if (contentSummary) {
+                await this.app.fileManager.processFrontMatter(annotatedFile, fm => {
+                    fm['ai_summary'] = contentSummary!.summary;
+                });
             }
 
             job.status     = 'done';
