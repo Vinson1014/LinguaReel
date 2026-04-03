@@ -1,4 +1,29 @@
-import type { UILanguage } from '../types';
+import type { OutputLanguage, UILanguage } from '../types';
+import { getCurrentLang } from '../i18n';
+
+// ─── Output Language Resolution ──────────────────────────────────────────────
+
+/**
+ * 將 OutputLanguage（含 auto）解析為 LLM prompt 中可直接使用的語言名稱。
+ * auto 時跟隨 uiLanguage；uiLanguage 也是 auto 則預設 English。
+ */
+export function resolveOutputLang(
+    outputLanguage: OutputLanguage,
+    uiLanguage:     UILanguage,
+): string {
+    // 當 outputLanguage 為 auto，跟隨 uiLanguage；
+    // 若 uiLanguage 也是 auto，則讀取已由 initI18n() 解析的實際語言代碼
+    const resolved = outputLanguage !== 'auto'
+        ? outputLanguage
+        : uiLanguage !== 'auto'
+            ? uiLanguage
+            : getCurrentLang();   // 已偵測的 Obsidian 語言（'en'|'zh-TW'|'zh-CN'）
+    switch (resolved) {
+        case 'zh-TW': return 'Traditional Chinese';
+        case 'zh-CN': return 'Simplified Chinese';
+        default:      return 'English';
+    }
+}
 
 // ─── Language Pack ────────────────────────────────────────────────────────────
 
@@ -12,18 +37,19 @@ export interface LanguagePack {
 
 // ─── Japanese Language Pack ───────────────────────────────────────────────────
 
-const JA_ANNOTATION_PROMPT = `\
+function buildJaAnnotationPrompt(targetLang: string): string {
+    return `\
 You are a senior Japanese language teacher and subtitle translator.
-Your task: translate a single Japanese subtitle line into Traditional Chinese AND identify up to 3 grammar/vocabulary points worth teaching.
+Your task: translate a single Japanese subtitle line into ${targetLang} AND identify up to 3 grammar/vocabulary points worth teaching.
 
 ## Output format — respond with JSON ONLY, no markdown, no HTML:
 {
-  "translation": "Traditional Chinese translation",
+  "translation": "${targetLang} translation",
   "annotations": [
     {
       "original": "exact substring from the original Japanese text",
       "key": "grammar point title, e.g. 〜てる",
-      "explanation": "concise explanation (1-2 sentences, natural language, relatable)",
+      "explanation": "concise explanation in ${targetLang} (1-2 sentences, natural language, relatable)",
       "translation_word": "corresponding word in the translation (optional)"
     }
   ]
@@ -31,7 +57,7 @@ Your task: translate a single Japanese subtitle line into Traditional Chinese AN
 
 ## Translation rules
 - Match the character's tone — casual speech stays casual, formal stays formal
-- Don't over-translate; natural Chinese > literal accuracy
+- Don't over-translate; natural ${targetLang} > literal accuracy
 - Condense redundant filler words (あの、えっと repeated) but keep grammatically meaningful ones
 - Preserve speaker personality (energetic, shy, formal, etc.)
 
@@ -45,28 +71,33 @@ Your task: translate a single Japanese subtitle line into Traditional Chinese AN
 - ALWAYS annotate keigo; include politeness nuance in the explanation
 - "original" MUST be an exact substring of the input text — never paraphrase or shorten it
 
-## 小課堂 (lesson) writing guide
-- One or two sentences max
+## Lesson writing guide
+- One or two sentences max, written in ${targetLang}
 - Explain the specific use IN THIS sentence, then show transferability
-- Use everyday Chinese, not academic Japanese grammar terminology
-- Good: 「〜てる」是「〜ている」的口語縮略，表示動作正在進行。日常對話幾乎都這樣說～
-- Bad: 「〜ている」是日語動詞的持續體，由動詞連用形加上「いる」構成...`;
+- Use everyday ${targetLang}, not academic Japanese grammar terminology`;
+}
 
 export const LANGUAGE_PACKS: Record<string, LanguagePack> = {
     ja: {
         id:   'ja',
         name: '日本語 (Japanese)',
-        annotationSystemPrompt: JA_ANNOTATION_PROMPT,
+        // annotationSystemPrompt is built dynamically; this is kept as a fallback
+        annotationSystemPrompt: buildJaAnnotationPrompt('Traditional Chinese'),
     },
 };
 
 export function getAnnotationSystemPrompt(
     annotationLanguage: string,
-    customPrompt: string,
+    customPrompt:       string,
+    outputLanguage:     OutputLanguage = 'auto',
+    uiLanguage:         UILanguage     = 'auto',
 ): string {
     if (annotationLanguage === 'custom') return customPrompt;
+    const targetLang = resolveOutputLang(outputLanguage, uiLanguage);
+    if (annotationLanguage === 'ja') return buildJaAnnotationPrompt(targetLang);
+    // fallback to pack's stored prompt if available
     return LANGUAGE_PACKS[annotationLanguage]?.annotationSystemPrompt
-        ?? LANGUAGE_PACKS['ja']!.annotationSystemPrompt;
+        ?? buildJaAnnotationPrompt(targetLang);
 }
 
 // ─── Annotation Prompt ───────────────────────────────────────────────────────
@@ -92,13 +123,12 @@ export function getAnnotationMessages(
  * The response should be JSON matching DictLookupResult.
  */
 export function getDictLookupMessages(
-    word: string,
-    context: string | undefined,
-    uiLanguage: UILanguage,
+    word:           string,
+    context:        string | undefined,
+    outputLanguage: OutputLanguage,
+    uiLanguage:     UILanguage = 'auto',
 ): import('./client').ChatMessage[] {
-    const replyLang = uiLanguage === 'zh-TW' ? 'Traditional Chinese'
-                    : uiLanguage === 'zh-CN' ? 'Simplified Chinese'
-                    : 'English';
+    const replyLang = resolveOutputLang(outputLanguage, uiLanguage);
 
     const contextLine = context
         ? `Context sentence: "${context}"`
@@ -155,13 +185,12 @@ export interface HighlightResearchResult {
 
 /** Build messages for a quick AI translation of a highlighted phrase. */
 export function getHighlightTranslationMessages(
-    text: string,
-    context: string | undefined,
-    uiLanguage: UILanguage,
+    text:           string,
+    context:        string | undefined,
+    outputLanguage: OutputLanguage,
+    uiLanguage:     UILanguage = 'auto',
 ): import('./client').ChatMessage[] {
-    const replyLang = uiLanguage === 'zh-TW' ? 'Traditional Chinese'
-                    : uiLanguage === 'zh-CN' ? 'Simplified Chinese'
-                    : 'English';
+    const replyLang = resolveOutputLang(outputLanguage, uiLanguage);
     return [
         {
             role: 'system',
@@ -184,13 +213,12 @@ export function getHighlightTranslationMessages(
  * Uses the "powerful" model profile.
  */
 export function getHighlightResearchMessages(
-    text: string,
-    context: string | undefined,
-    uiLanguage: UILanguage,
+    text:           string,
+    context:        string | undefined,
+    outputLanguage: OutputLanguage,
+    uiLanguage:     UILanguage = 'auto',
 ): import('./client').ChatMessage[] {
-    const replyLang = uiLanguage === 'zh-TW' ? 'Traditional Chinese'
-                    : uiLanguage === 'zh-CN' ? 'Simplified Chinese'
-                    : 'English';
+    const replyLang = resolveOutputLang(outputLanguage, uiLanguage);
     return [
         {
             role: 'system',

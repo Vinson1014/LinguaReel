@@ -209,7 +209,7 @@ export class HighlightView extends ItemView {
             translateBtn.setText(t('highlight.translating'));
             translateBtn.disabled = true;
             try {
-                const msgs   = getHighlightTranslationMessages(note.text, note.context, this.plugin.settings.uiLanguage);
+                const msgs   = getHighlightTranslationMessages(note.text, note.context, this.plugin.settings.outputLanguage, this.plugin.settings.uiLanguage);
                 const result = await this.plugin.llm.chatJSON<HighlightTranslationResult>(msgs, 'fast');
                 const translation = result.translation + (result.note ? `\n${result.note}` : '');
                 await this.saveToDb({ ...note, aiTranslation: translation });
@@ -233,7 +233,7 @@ export class HighlightView extends ItemView {
             researchBtn.setText(t('highlight.researching'));
             researchBtn.disabled = true;
             try {
-                const msgs   = getHighlightResearchMessages(note.text, note.context, this.plugin.settings.uiLanguage);
+                const msgs   = getHighlightResearchMessages(note.text, note.context, this.plugin.settings.outputLanguage, this.plugin.settings.uiLanguage);
                 const result = await this.plugin.llm.chatJSON<HighlightResearchResult>(msgs, 'powerful');
                 const json   = JSON.stringify(result);
                 await this.saveToDb({ ...note, aiResearch: json });

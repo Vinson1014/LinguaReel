@@ -1,7 +1,7 @@
 import { App, PluginSettingTab, Setting } from 'obsidian';
 import type VLLPlugin from './main';
 import { t } from './i18n';
-import type { ProviderProfile, VLLSettings } from './types';
+import type { OutputLanguage, ProviderProfile, VLLSettings } from './types';
 
 // ===== Provider 預設值（首次切換時使用） =====
 
@@ -17,7 +17,8 @@ export const PROVIDER_DEFAULTS: Record<string, ProviderProfile> = {
 
 export const DEFAULT_SETTINGS: VLLSettings = {
     // 一般
-    uiLanguage: 'auto',
+    uiLanguage:     'auto',
+    outputLanguage: 'auto',
 
     // 字典
     dictSource:    'jisho',
@@ -87,8 +88,22 @@ export class VLLSettingTab extends PluginSettingTab {
                 .onChange(async v => {
                     this.plugin.settings.uiLanguage = v as VLLSettings['uiLanguage'];
                     await this.plugin.saveSettings();
-                    // 重新渲染設定頁以反映語言切換
                     this.display();
+                })
+            );
+
+        new Setting(el)
+            .setName(t('settings.general.outputLanguage'))
+            .setDesc(t('settings.general.outputLanguageDesc'))
+            .addDropdown(dd => dd
+                .addOption('auto',  t('settings.general.langAuto'))
+                .addOption('en',    t('settings.general.langEn'))
+                .addOption('zh-TW', t('settings.general.langZhTW'))
+                .addOption('zh-CN', t('settings.general.langZhCN'))
+                .setValue(this.plugin.settings.outputLanguage)
+                .onChange(async v => {
+                    this.plugin.settings.outputLanguage = v as OutputLanguage;
+                    await this.plugin.saveSettings();
                 })
             );
     }

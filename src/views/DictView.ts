@@ -204,6 +204,7 @@ export class DictView extends ItemView {
             const messages = getDictLookupMessages(
                 word,
                 context,
+                this.plugin.settings.outputLanguage,
                 this.plugin.settings.uiLanguage,
             );
             const result = await this.plugin.llm.chatJSON<DictLookupResult>(messages);

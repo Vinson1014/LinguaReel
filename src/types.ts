@@ -127,6 +127,8 @@ export interface HighlightNote {
 
 export type DictSource    = 'none' | 'jisho' | 'weblio' | 'youdao' | 'google';
 export type UILanguage    = 'auto' | 'en' | 'zh-TW' | 'zh-CN';
+/** LLM 輸出語言：AI 生成的翻譯、解釋、定義所用的語言 */
+export type OutputLanguage = 'auto' | 'en' | 'zh-TW' | 'zh-CN';
 export type WhisperModel  = 'tiny' | 'base' | 'small' | 'medium' | 'large' | 'large-v2' | 'large-v3';
 export type WhisperDevice = 'cpu' | 'cuda' | 'auto';
 
@@ -163,7 +165,9 @@ export interface ProviderProfile {
 
 export interface VLLSettings {
     // ── 一般 ──────────────────────────────────────
-    uiLanguage: UILanguage;
+    uiLanguage:     UILanguage;
+    /** LLM 輸出語言（翻譯、定義、解釋、標注說明）。auto = 跟隨 uiLanguage */
+    outputLanguage: OutputLanguage;
 
     // ── 字典 ──────────────────────────────────────
     dictSource:    DictSource;

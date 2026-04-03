@@ -13,9 +13,11 @@ const en = {
     settings: {
         title: 'VLL Settings',
         general: {
-            title:        'General',
-            language:     'Interface Language',
-            languageDesc: 'Language used in plugin UI (auto follows Obsidian)',
+            title:              'General',
+            language:           'Interface Language',
+            languageDesc:       'Language used in plugin UI (auto follows Obsidian)',
+            outputLanguage:     'AI Output Language',
+            outputLanguageDesc: 'Language for all AI-generated content: translations, definitions, annotations, flashcard notes. auto = same as interface language.',
             langAuto:  'Auto',
             langEn:    'English',
             langZhTW:  '繁體中文',

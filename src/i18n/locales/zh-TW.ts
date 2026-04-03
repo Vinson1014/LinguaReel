@@ -13,9 +13,11 @@ const zhTW: Translations = {
     settings: {
         title: 'VLL 設定',
         general: {
-            title:        '一般',
-            language:     '介面語言',
-            languageDesc: '插件 UI 使用的語言（auto 跟隨 Obsidian 設定）',
+            title:              '一般',
+            language:           '介面語言',
+            languageDesc:       '插件 UI 使用的語言（auto 跟隨 Obsidian 設定）',
+            outputLanguage:     'AI 輸出語言',
+            outputLanguageDesc: '所有 AI 生成內容使用的語言：翻譯、定義、標注說明、字卡筆記。auto = 跟隨介面語言。',
             langAuto:  '自動',
             langEn:    'English',
             langZhTW:  '繁體中文',

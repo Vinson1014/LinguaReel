@@ -242,6 +242,8 @@ export default class VLLPlugin extends Plugin {
             const systemPrompt = getAnnotationSystemPrompt(
                 this.settings.annotationLanguage,
                 this.settings.annotationSystemPrompt,
+                this.settings.outputLanguage,
+                this.settings.uiLanguage,
             );
 
             // Throttle streaming UI updates — 最多每 150ms 觸發一次 DOM 更新
