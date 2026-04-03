@@ -246,17 +246,30 @@ export default class VLLPlugin extends Plugin {
                 this.settings.uiLanguage,
             );
 
-            // 在正式標注前先讓 LLM 摘要整份字幕，取得主題/語氣/人物背景
-            // 失敗時靜默跳過，不影響主流程
+            // 在正式標注前先取得字幕摘要：優先讀 frontmatter 快取，避免重複 API 呼叫
             let contentSummary: SubtitleSummary | null = null;
-            try {
-                const summaryMsgs = getSubtitleSummaryMessages(
-                    entries.map(e => e.text),
-                    this.settings.outputLanguage,
-                    this.settings.uiLanguage,
-                );
-                contentSummary = await this.llm.chatJSON<SubtitleSummary>(summaryMsgs, 'fast');
-            } catch { /* 靜默失敗 */ }
+            const cachedSummary = this.app.metadataCache
+                .getFileCache(file)?.frontmatter?.['ai_summary'] as string | undefined;
+
+            if (cachedSummary) {
+                // 快取命中：直接用，不重複呼叫 API
+                contentSummary = { topic: '', tone: '', summary: cachedSummary };
+            } else {
+                try {
+                    const summaryMsgs = getSubtitleSummaryMessages(
+                        entries.map(e => e.text),
+                        this.settings.outputLanguage,
+                        this.settings.uiLanguage,
+                    );
+                    contentSummary = await this.llm.chatJSON<SubtitleSummary>(summaryMsgs, 'fast');
+                    // 存入原始筆記 frontmatter，下次標注或查詞可直接讀取
+                    if (contentSummary) {
+                        await this.app.fileManager.processFrontMatter(file, fm => {
+                            fm['ai_summary'] = contentSummary!.summary;
+                        });
+                    }
+                } catch { /* 靜默失敗 */ }
+            }
 
             // 將摘要注入 system prompt（LLM 知道脈絡後標注品質更好）
             if (contentSummary) {

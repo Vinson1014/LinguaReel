@@ -72,8 +72,10 @@ export class ShadowingView extends ItemView {
     private mode: ShadowingMode  = 'shadowing';
 
     // Note state
-    private currentFile: TFile | null   = null;
-    private entries:     ShadowingEntry[] = [];
+    private currentFile:  TFile | null    = null;
+    private entries:      ShadowingEntry[] = [];
+    /** 從筆記 frontmatter 讀取的 ai_summary，查詞時注入 context */
+    private noteSummary?: string;
 
     // UI refs
     private playPauseBtn!:    HTMLButtonElement;
@@ -121,6 +123,9 @@ export class ShadowingView extends ItemView {
         this.blocks       = this.buildBlocks(entries);
         this.activeIndex  = -1;
         this.annotatedMap = await this.loadAnnotatedData(file);
+        // 讀取 ai_summary（標注時生成並存在 frontmatter），供查詞時注入
+        this.noteSummary  = this.plugin.app.metadataCache
+            .getFileCache(file)?.frontmatter?.['ai_summary'] as string | undefined;
 
         this.renderNoteView(file, source);
     }
@@ -416,10 +421,11 @@ export class ShadowingView extends ItemView {
         dictBtn.addEventListener('mousedown', e => {
             e.preventDefault();
             this.hideSelectionPopup();
-            // 前後各 2 條字幕合併為 context，讓 LLM 理解前後文
+            // 前後各 2 條字幕合併為 context，並附加筆記 ai_summary（若有）
             const lo = Math.max(0, blockIdx - 2);
             const hi = Math.min(this.blocks.length - 1, blockIdx + 2);
-            const context    = this.blocks.slice(lo, hi + 1).map(b => b.text).join(' ');
+            let context = this.blocks.slice(lo, hi + 1).map(b => b.text).join(' ');
+            if (this.noteSummary) context += `\n[Content context: ${this.noteSummary}]`;
             const timestamp  = this.blocks[blockIdx]?.timestamp;
             const sourceFile = this.currentFile ? `[[${this.currentFile.basename}]]` : undefined;
             this.plugin.lookupWord(text, context, sourceFile, timestamp);
