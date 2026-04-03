@@ -1,4 +1,10 @@
 const en = {
+    // ── 標注教材標籤 ───────────────────────────────
+    annotation: {
+        translationLabel: 'Translation',
+        lessonLabel:      'Lesson',
+    },
+
     // ── 指令 ──────────────────────────────────────
     commands: {
         importVideo:     'Import video to Shadowing Workshop',

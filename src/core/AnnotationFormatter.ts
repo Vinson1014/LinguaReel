@@ -1,4 +1,5 @@
 import type { AnnotatedEntry } from '../types';
+import { t } from '../i18n';
 
 /**
  * 純函數：將標註資料轉換為 Markdown + HTML 格式的字幕行
@@ -22,7 +23,7 @@ function spanUnderline(text: string): string {
 function lessonDiv(key: string, explanation: string): string {
     return (
         '<div class="vll-ann-lesson">'
-      + `<span class="vll-ann-label vll-ann-lesson-label">小課堂</span>：`
+      + `<span class="vll-ann-label vll-ann-lesson-label">${t('annotation.lessonLabel')}</span>：`
       + `<span class="vll-ann-key">${key}</span> ${explanation}`
       + '</div>'
     );
@@ -32,7 +33,7 @@ function lessonDiv(key: string, explanation: string): string {
 function translationDiv(translationHtml: string, lessonsHtml: string): string {
     return (
         '<div class="vll-ann-block">'
-      + `<span class="vll-ann-label vll-ann-translation-label">翻譯</span>：${translationHtml}`
+      + `<span class="vll-ann-label vll-ann-translation-label">${t('annotation.translationLabel')}</span>：${translationHtml}`
       + lessonsHtml
       + '</div>'
     );

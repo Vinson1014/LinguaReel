@@ -1,6 +1,11 @@
 import type { Translations } from './en';
 
 const zhCN: Translations = {
+    annotation: {
+        translationLabel: '翻译',
+        lessonLabel:      '小课堂',
+    },
+
     commands: {
         importVideo:    '导入视频到跟读工坊',
         annotateNote:   '标注当前跟读笔记',

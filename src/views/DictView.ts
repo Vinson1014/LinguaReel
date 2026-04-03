@@ -2,7 +2,7 @@ import { ItemView, WorkspaceLeaf } from 'obsidian';
 import { VIEW_TYPE_DICT } from '../constants';
 import { t } from '../i18n';
 import type VLLPlugin from '../main';
-import { getDictLookupMessages, type DictLookupResult } from '../llm/prompts';
+import { getDictLookupMessages, resolveSourceLang, type DictLookupResult } from '../llm/prompts';
 import type { DictSource } from '../types';
 
 /**
@@ -216,6 +216,7 @@ export class DictView extends ItemView {
                 context,
                 this.plugin.settings.outputLanguage,
                 this.plugin.settings.uiLanguage,
+                resolveSourceLang(this.plugin.settings.annotationLanguage),
             );
             const result = await this.plugin.llm.chatJSON<DictLookupResult>(messages);
             if (!Array.isArray(result.definitions)) result.definitions = [];

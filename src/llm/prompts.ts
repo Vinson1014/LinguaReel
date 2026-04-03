@@ -25,6 +25,23 @@ export function resolveOutputLang(
     }
 }
 
+/**
+ * 將 annotationLanguage（'ja'/'ko'/...）解析為 LLM prompt 中的語言名稱。
+ * 用於告知 LLM 使用者正在學習的是哪種語言。
+ */
+export function resolveSourceLang(annotationLanguage: string): string {
+    const NAMES: Record<string, string> = {
+        ja: 'Japanese',
+        ko: 'Korean',
+        zh: 'Mandarin Chinese',
+        en: 'English',
+        fr: 'French',
+        de: 'German',
+        es: 'Spanish',
+    };
+    return NAMES[annotationLanguage] ?? 'Japanese';
+}
+
 // ─── Language Pack ────────────────────────────────────────────────────────────
 
 export interface LanguagePack {
@@ -162,25 +179,27 @@ export function getDictLookupMessages(
     context:        string | undefined,
     outputLanguage: OutputLanguage,
     uiLanguage:     UILanguage = 'auto',
+    sourceLang?:    string,
 ): import('./client').ChatMessage[] {
-    const replyLang = resolveOutputLang(outputLanguage, uiLanguage);
+    const replyLang  = resolveOutputLang(outputLanguage, uiLanguage);
+    const sourceLine = sourceLang ? `The word is in ${sourceLang}. ` : '';
 
     const contextLine = context
-        ? `Context sentence: "${context}"`
+        ? `Context: "${context}"`
         : 'No context provided.';
 
     return [
         {
             role: 'system',
             content: `\
-You are a language teacher. The user double-clicked a word in a text to look it up.
+${sourceLine}You are a language teacher helping a student look up a word.
 Return ONLY a JSON object (no markdown, no code fences) with these fields:
 {
   "reading": "pronunciation/reading (e.g. hiragana for Japanese, pinyin for Chinese, IPA for others; empty string if same as word)",
   "pos": "part of speech (e.g. noun, verb, adjective suffix)",
   "definitions": ["definition 1", "definition 2"],
-  "example": { "original": "example sentence", "translation": "translation" },
-  "notes": "brief grammar or usage note (1-2 sentences; empty string if nothing notable)"
+  "example": { "original": "${sourceLang ?? 'source language'} example sentence", "translation": "${replyLang} translation" },
+  "notes": "brief grammar or usage note in ${replyLang} (1-2 sentences; empty string if nothing notable)"
 }
 All text values (definitions, notes, translations) must be in ${replyLang}.
 Keep definitions concise. Provide 1–3 definitions maximum.`,
@@ -224,15 +243,16 @@ export function getHighlightTranslationMessages(
     context:        string | undefined,
     outputLanguage: OutputLanguage,
     uiLanguage:     UILanguage = 'auto',
+    sourceLang?:    string,
 ): import('./client').ChatMessage[] {
-    const replyLang = resolveOutputLang(outputLanguage, uiLanguage);
+    const replyLang  = resolveOutputLang(outputLanguage, uiLanguage);
+    const fromClause = sourceLang ? `from ${sourceLang} ` : '';
     return [
         {
             role: 'system',
             content:
-                `You are a translator. Translate the highlighted text concisely. ` +
-                `Return ONLY JSON (no markdown): {"translation":"...","note":"brief grammar/usage note or empty string"}. ` +
-                `Reply in ${replyLang}.`,
+                `You are a language teacher. Translate the highlighted ${sourceLang ?? 'text'} ${fromClause}into ${replyLang} concisely. ` +
+                `Return ONLY JSON (no markdown): {"translation":"...","note":"brief grammar/usage note in ${replyLang}, or empty string"}.`,
         },
         {
             role: 'user',
@@ -252,17 +272,21 @@ export function getHighlightResearchMessages(
     context:        string | undefined,
     outputLanguage: OutputLanguage,
     uiLanguage:     UILanguage = 'auto',
+    sourceLang?:    string,
 ): import('./client').ChatMessage[] {
-    const replyLang = resolveOutputLang(outputLanguage, uiLanguage);
+    const replyLang  = resolveOutputLang(outputLanguage, uiLanguage);
+    const langClause = sourceLang ? `${sourceLang} ` : '';
     return [
         {
             role: 'system',
             content:
-                `You are a language and culture expert. Research the highlighted text thoroughly. ` +
+                `You are a ${langClause}language and culture expert helping a language learner. ` +
+                `Research the highlighted ${langClause}text thoroughly. ` +
                 `Return ONLY JSON (no markdown):\n` +
-                `{"translation":"...","explanation":"detailed meaning, nuance, etymology (under 80 words)",` +
-                `"examples":[{"original":"...","translation":"..."}],"related":["related words or phrases"],` +
-                `"cultural":"cultural/contextual notes if relevant, empty string if not"}\n` +
+                `{"translation":"${replyLang} translation","explanation":"detailed meaning, nuance, etymology in ${replyLang} (under 80 words)",` +
+                `"examples":[{"original":"${sourceLang ?? 'source'} sentence","translation":"${replyLang} translation"}],` +
+                `"related":["related ${langClause}words or phrases"],` +
+                `"cultural":"${replyLang} cultural/contextual notes if relevant, empty string if not"}\n` +
                 `Reply in ${replyLang}. Provide 1-2 examples max.`,
         },
         {
