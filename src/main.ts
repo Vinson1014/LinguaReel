@@ -15,7 +15,7 @@ import { WhisperRunner } from './core/WhisperRunner';
 import { SubtitleParser } from './core/SubtitleParser';
 import { AnnotationPipeline } from './core/AnnotationPipeline';
 import { NoteGenerator } from './core/NoteGenerator';
-import { getAnnotationSystemPrompt } from './llm/prompts';
+import { getAnnotationSystemPrompt, getSubtitleSummaryMessages, type SubtitleSummary } from './llm/prompts';
 import {
     VIEW_TYPE_HOME,
     VIEW_TYPE_DICT,
@@ -239,12 +239,35 @@ export default class VLLPlugin extends Plugin {
             job.total = entries.length;
             this._emitJobUpdate();
 
-            const systemPrompt = getAnnotationSystemPrompt(
+            let systemPrompt = getAnnotationSystemPrompt(
                 this.settings.annotationLanguage,
                 this.settings.annotationSystemPrompt,
                 this.settings.outputLanguage,
                 this.settings.uiLanguage,
             );
+
+            // 在正式標注前先讓 LLM 摘要整份字幕，取得主題/語氣/人物背景
+            // 失敗時靜默跳過，不影響主流程
+            let contentSummary: SubtitleSummary | null = null;
+            try {
+                const summaryMsgs = getSubtitleSummaryMessages(
+                    entries.map(e => e.text),
+                    this.settings.outputLanguage,
+                    this.settings.uiLanguage,
+                );
+                contentSummary = await this.llm.chatJSON<SubtitleSummary>(summaryMsgs, 'fast');
+            } catch { /* 靜默失敗 */ }
+
+            // 將摘要注入 system prompt（LLM 知道脈絡後標注品質更好）
+            if (contentSummary) {
+                systemPrompt +=
+                    `\n\n## Content context\n` +
+                    `Topic: ${contentSummary.topic}\n` +
+                    (contentSummary.characters ? `Characters: ${contentSummary.characters}\n` : '') +
+                    `Tone: ${contentSummary.tone}\n` +
+                    (contentSummary.setting ? `Setting: ${contentSummary.setting}\n` : '') +
+                    `Summary: ${contentSummary.summary}`;
+            }
 
             // Throttle streaming UI updates — 最多每 150ms 觸發一次 DOM 更新
             let pendingEmit = false;
@@ -271,7 +294,13 @@ export default class VLLPlugin extends Plugin {
                 },
             });
 
-            const header        = SubtitleParser.extractNoteHeader(noteContent);
+            // 若有摘要，將 ai_summary 注入 annotated note 的 frontmatter
+            let header = SubtitleParser.extractNoteHeader(noteContent);
+            if (contentSummary) {
+                const cleanSummary = contentSummary.summary.replace(/"/g, "'");
+                // 在 frontmatter 結尾插入 ai_summary 欄位
+                header = header.replace(/(\n---\s*\n)/, `\nai_summary: "${cleanSummary}"$1`);
+            }
             const annotatedPath = normalizePath(NoteGenerator.annotatedNotePath(file.path));
             const existing      = this.app.vault.getAbstractFileByPath(annotatedPath);
             if (existing instanceof TFile) {
@@ -299,13 +328,18 @@ export default class VLLPlugin extends Plugin {
     }
 
     /** 觸發查詞（開啟 DictView 並查詢） */
-    async lookupWord(word: string, context?: string): Promise<void> {
+    async lookupWord(
+        word:       string,
+        context?:   string,
+        sourceFile?: string,
+        timestamp?:  string,
+    ): Promise<void> {
         await this.openView(VIEW_TYPE_DICT);
         const leaves = this.app.workspace.getLeavesOfType(VIEW_TYPE_DICT);
         if (leaves.length > 0) {
             const view = leaves[0]!.view as DictView;
             const ctx = context ?? window.getSelection()?.anchorNode?.textContent ?? undefined;
-            await view.lookup(word, ctx);
+            await view.lookup(word, ctx, sourceFile, timestamp);
         }
     }
 

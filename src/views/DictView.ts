@@ -17,7 +17,11 @@ export class DictView extends ItemView {
     static readonly type = VIEW_TYPE_DICT;
 
     private searchInput!: HTMLInputElement;
-    private resultEl!: HTMLElement;
+    private resultEl!:    HTMLElement;
+    /** 本次查詞的來源筆記（wikilink 格式，例如 [[Note]]）和時間戳，加入生詞本時記錄雙向連結 */
+    private lookupSourceFile?: string;
+    private lookupTimestamp?:  string;
+    private lookupContext?:    string;
 
     constructor(leaf: WorkspaceLeaf, private plugin: VLLPlugin) {
         super(leaf);
@@ -35,9 +39,12 @@ export class DictView extends ItemView {
         this.contentEl.empty();
     }
 
-    /** 外部呼叫入口（Ctrl+雙擊觸發） */
-    async lookup(word: string, context?: string): Promise<void> {
-        this.searchInput.value = word;
+    /** 外部呼叫入口（Ctrl+雙擊或 ShadowingView popup 觸發） */
+    async lookup(word: string, context?: string, sourceFile?: string, timestamp?: string): Promise<void> {
+        this.searchInput.value   = word;
+        this.lookupSourceFile    = sourceFile;
+        this.lookupTimestamp     = timestamp;
+        this.lookupContext       = context;
         await this.runLookup(word, context);
     }
 
@@ -172,6 +179,9 @@ export class DictView extends ItemView {
                 pos:         data.pos      || undefined,
                 definitions: data.definitions,
                 example:     data.example?.original || undefined,
+                context:     this.lookupContext,
+                sourceFile:  this.lookupSourceFile,
+                timestamp:   this.lookupTimestamp,
                 tags:        [],
                 createdAt:   now,
                 // FSRS initial state

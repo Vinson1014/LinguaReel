@@ -416,8 +416,13 @@ export class ShadowingView extends ItemView {
         dictBtn.addEventListener('mousedown', e => {
             e.preventDefault();
             this.hideSelectionPopup();
-            const context = this.blocks[blockIdx]?.text ?? undefined;
-            this.plugin.lookupWord(text, context);
+            // 前後各 2 條字幕合併為 context，讓 LLM 理解前後文
+            const lo = Math.max(0, blockIdx - 2);
+            const hi = Math.min(this.blocks.length - 1, blockIdx + 2);
+            const context    = this.blocks.slice(lo, hi + 1).map(b => b.text).join(' ');
+            const timestamp  = this.blocks[blockIdx]?.timestamp;
+            const sourceFile = this.currentFile ? `[[${this.currentFile.basename}]]` : undefined;
+            this.plugin.lookupWord(text, context, sourceFile, timestamp);
         });
         popup.appendChild(dictBtn);
 

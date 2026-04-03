@@ -100,6 +100,41 @@ export function getAnnotationSystemPrompt(
         ?? buildJaAnnotationPrompt(targetLang);
 }
 
+// ─── Subtitle Summary Prompt ──────────────────────────────────────────────────
+
+/** JSON shape returned by getSubtitleSummaryMessages */
+export interface SubtitleSummary {
+    topic:       string;
+    characters?: string;
+    tone:        string;
+    setting?:    string;
+    summary:     string;
+}
+
+/**
+ * 對整份字幕的前幾十行進行快速摘要，讓後續標注 LLM 了解背景（主題/語氣/人物）。
+ * 只取前 40 行避免 token 過多；一般 30 秒字幕已足夠捕捉語境。
+ */
+export function getSubtitleSummaryMessages(
+    subtitleTexts: string[],
+    outputLanguage: OutputLanguage,
+    uiLanguage:     UILanguage = 'auto',
+): import('./client').ChatMessage[] {
+    const targetLang = resolveOutputLang(outputLanguage, uiLanguage);
+    const sample = subtitleTexts.slice(0, 40).join('\n');
+    return [
+        {
+            role: 'system',
+            content:
+                `You are a content analyst. Read the subtitle excerpt and produce a brief context profile.\n` +
+                `Return ONLY JSON (no markdown):\n` +
+                `{"topic":"main topic or show type","characters":"visible speakers if any","tone":"speech style (casual/formal/energetic/etc)","setting":"context or scene","summary":"1–2 sentence overview"}\n` +
+                `Write all values in ${targetLang}.`,
+        },
+        { role: 'user', content: sample },
+    ];
+}
+
 // ─── Annotation Prompt ───────────────────────────────────────────────────────
 
 /**
