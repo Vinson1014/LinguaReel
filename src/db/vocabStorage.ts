@@ -126,8 +126,9 @@ export class VocabStorage {
             reading:     fm.reading,
             pos:         fm.pos,
             definitions: Array.isArray(fm.definitions) ? fm.definitions : (fm.definitions ? [fm.definitions] : []),
-            example:     fm.example,
-            sourceFile:  fm.source,
+            example:            fm.example,
+            exampleTranslation: fm.example_translation,
+            sourceFile:         fm.source,
             timestamp:   fm.timestamp,
             context:     fm.context,
             tags:        Array.isArray(fm.tags) ? fm.tags : [],
@@ -173,8 +174,9 @@ export class VocabStorage {
         const lastRev   = e.lastReview ? msToDateStr(e.lastReview) : '';
         const defsYaml  = e.definitions.map(d => `  - "${d.replace(/"/g, "'")}"`).join('\n');
         const sourceVal = e.sourceFile ? `"${e.sourceFile}"` : '';
-        const exampleQ  = e.example   ? `"${e.example.replace(/"/g, "'")}"` : '';
-        const contextQ  = e.context   ? `"${e.context.replace(/"/g, "'")}"` : '';
+        const exampleQ    = e.example            ? `"${e.example.replace(/"/g, "'")}"` : '';
+        const exTransQ    = e.exampleTranslation ? `"${e.exampleTranslation.replace(/"/g, "'")}"` : '';
+        const contextQ    = e.context            ? `"${e.context.replace(/"/g, "'")}"` : '';
 
         const frontmatter = [
             '---',
@@ -183,7 +185,8 @@ export class VocabStorage {
             e.pos       ? `pos: ${e.pos}`           : '',
             `definitions:`,
             defsYaml || '  []',
-            exampleQ    ? `example: ${exampleQ}`    : '',
+            exampleQ    ? `example: ${exampleQ}`        : '',
+            exTransQ    ? `example_translation: ${exTransQ}` : '',
             contextQ    ? `context: ${contextQ}`    : '',
             sourceVal   ? `source: ${sourceVal}`    : '',
             e.timestamp ? `timestamp: "${e.timestamp}"` : '',

@@ -257,7 +257,8 @@ export class HomeView extends ItemView {
             openBtn.addEventListener('click', async () => {
                 const f = this.app.vault.getAbstractFileByPath(job.resultPath!);
                 if (f instanceof TFile) {
-                    await this.app.workspace.getLeaf(false).openFile(f);
+                    const leaf = this.app.workspace.getLeaf(false);
+                    await leaf.openFile(f, { state: { mode: 'preview' } });
                 }
             });
         }

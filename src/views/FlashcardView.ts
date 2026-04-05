@@ -17,6 +17,8 @@ export class FlashcardView extends ItemView {
     private dueCards:  VocabEntry[] = [];
     private queueIdx   = 0;
     private doneToday  = 0;
+    /** 目前等待鍵盤輸入的評分回呼（顯示答案後才設定） */
+    private ratingCallback: ((r: Rating) => void) | null = null;
 
     constructor(leaf: WorkspaceLeaf, private plugin: VLLPlugin) {
         super(leaf);
@@ -28,6 +30,21 @@ export class FlashcardView extends ItemView {
 
     async onOpen(): Promise<void> {
         this.contentEl.addClass('vll-flashcard-view');
+        // 鍵盤快捷鍵：1=Again 2=Hard 3=Good 4=Easy（顯示答案後才生效）
+        this.registerDomEvent(this.contentEl, 'keydown', (e: KeyboardEvent) => {
+            if (!this.ratingCallback) return;
+            const map: Record<string, Rating> = {
+                '1': Rating.Again, '2': Rating.Hard,
+                '3': Rating.Good,  '4': Rating.Easy,
+            };
+            const r = map[e.key];
+            if (r !== undefined) {
+                e.preventDefault();
+                const cb = this.ratingCallback;
+                this.ratingCallback = null;
+                cb(r);
+            }
+        });
         await this.loadSession();
     }
 
@@ -83,6 +100,11 @@ export class FlashcardView extends ItemView {
         const badge = stateText(vocab.state);
         if (badge) front.createEl('span', { text: badge, cls: 'vll-fc-state-badge' });
 
+        // 上下文提示：讓大腦有記憶線索而非純強記
+        if (vocab.context) {
+            front.createEl('div', { text: vocab.context, cls: 'vll-fc-context-hint' });
+        }
+
         const showBtn = container.createEl('button', {
             text: t('flashcard.showAnswer'),
             cls:  'vll-btn vll-btn-primary vll-fc-show-btn',
@@ -109,10 +131,10 @@ export class FlashcardView extends ItemView {
         if (vocab.example) {
             const ex = back.createDiv({ cls: 'vll-fc-example' });
             ex.createEl('span', { text: '例：', cls: 'vll-fc-example-label' });
-            ex.createEl('span', { text: vocab.example });
-        }
-        if (vocab.context) {
-            back.createDiv({ text: vocab.context, cls: 'vll-fc-context' });
+            ex.createEl('div', { text: vocab.example });
+            if (vocab.exampleTranslation) {
+                ex.createEl('div', { text: vocab.exampleTranslation, cls: 'vll-fc-example-translation' });
+            }
         }
         if (vocab.sourceFile || vocab.timestamp) {
             const src = back.createDiv({ cls: 'vll-fc-source' });
@@ -129,22 +151,32 @@ export class FlashcardView extends ItemView {
         const bar     = container.createDiv({ cls: 'vll-fc-rating-bar' });
         const preview = this.previewIntervals(vocab);
 
-        const ratings: Array<{ r: Rating; label: string; cls: string }> = [
-            { r: Rating.Again, label: t('flashcard.again'), cls: 'vll-fc-btn-again' },
-            { r: Rating.Hard,  label: t('flashcard.hard'),  cls: 'vll-fc-btn-hard'  },
-            { r: Rating.Good,  label: t('flashcard.good'),  cls: 'vll-fc-btn-good'  },
-            { r: Rating.Easy,  label: t('flashcard.easy'),  cls: 'vll-fc-btn-easy'  },
+        const ratings: Array<{ r: Rating; label: string; cls: string; key: string }> = [
+            { r: Rating.Again, label: t('flashcard.again'), cls: 'vll-fc-btn-again', key: '1' },
+            { r: Rating.Hard,  label: t('flashcard.hard'),  cls: 'vll-fc-btn-hard',  key: '2' },
+            { r: Rating.Good,  label: t('flashcard.good'),  cls: 'vll-fc-btn-good',  key: '3' },
+            { r: Rating.Easy,  label: t('flashcard.easy'),  cls: 'vll-fc-btn-easy',  key: '4' },
         ];
 
-        for (const { r, label, cls } of ratings) {
+        const submit = async (r: Rating) => {
+            this.ratingCallback = null;
+            bar.querySelectorAll('button').forEach(b => ((b as HTMLButtonElement).disabled = true));
+            await this.submitRating(vocab, r);
+        };
+
+        // 鍵盤快捷鍵 callback（keydown handler 在 onOpen 已註冊）
+        this.ratingCallback = submit;
+
+        for (const { r, label, cls, key } of ratings) {
             const wrap = bar.createDiv({ cls: 'vll-fc-btn-wrap' });
             const hint = preview[r];
             if (hint) wrap.createEl('span', { text: hint, cls: 'vll-fc-interval-hint' });
-            const btn = wrap.createEl('button', { text: label, cls: `vll-btn vll-fc-rating-btn ${cls}` });
-            btn.addEventListener('click', async () => {
-                bar.querySelectorAll('button').forEach(b => ((b as HTMLButtonElement).disabled = true));
-                await this.submitRating(vocab, r);
+            const btn = wrap.createEl('button', {
+                text: `${key} ${label}`,
+                cls: `vll-btn vll-fc-rating-btn ${cls}`,
+                attr: { title: `Press ${key}` },
             });
+            btn.addEventListener('click', () => submit(r));
         }
     }
 

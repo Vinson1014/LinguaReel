@@ -72,10 +72,12 @@ export class ShadowingView extends ItemView {
     private mode: ShadowingMode  = 'shadowing';
 
     // Note state
-    private currentFile:  TFile | null    = null;
-    private entries:      ShadowingEntry[] = [];
+    private currentFile:     TFile | null    = null;
+    private entries:         ShadowingEntry[] = [];
     /** 從筆記 frontmatter 讀取的 ai_summary，查詞時注入 context */
-    private noteSummary?: string;
+    private noteSummary?:    string;
+    /** Header 中的「開啟標注版」按鈕（有標注版時才啟用） */
+    private openAnnotatedBtn: HTMLButtonElement | null = null;
 
     // UI refs
     private playPauseBtn!:    HTMLButtonElement;
@@ -128,6 +130,20 @@ export class ShadowingView extends ItemView {
             .getFileCache(file)?.frontmatter?.['ai_summary'] as string | undefined;
 
         this.renderNoteView(file, source);
+
+        // 更新「開啟標注版」按鈕狀態
+        if (this.openAnnotatedBtn && !file.path.endsWith(' - annotated.md')) {
+            const annotatedPath = normalizePath(NoteGenerator.annotatedNotePath(file.path));
+            const annotatedFile = this.plugin.app.vault.getAbstractFileByPath(annotatedPath);
+            const hasAnnotated  = annotatedFile instanceof TFile;
+            this.openAnnotatedBtn.disabled = !hasAnnotated;
+            if (hasAnnotated) {
+                this.openAnnotatedBtn.onclick = async () => {
+                    const leaf = this.plugin.app.workspace.getLeaf(false);
+                    await leaf.openFile(annotatedFile as TFile, { state: { mode: 'preview' } });
+                };
+            }
+        }
     }
 
     /**
@@ -237,6 +253,12 @@ export class ShadowingView extends ItemView {
         // ── Title ──
         const header = contentEl.createDiv({ cls: 'vll-shadowing-header' });
         header.createEl('span', { text: file.basename, cls: 'vll-shadowing-title' });
+        // 「開啟標注版」按鈕（loadNote 中更新狀態）
+        this.openAnnotatedBtn = header.createEl('button', {
+            text: t('shadowing.openAnnotated'),
+            cls:  'vll-btn vll-shadowing-annotated-btn',
+        });
+        this.openAnnotatedBtn.disabled = true;
 
         // ── Video player ──
         if (source) {
