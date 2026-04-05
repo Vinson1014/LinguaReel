@@ -283,10 +283,7 @@
 .vll-home-logo {
     font-size: 1.6em;
     font-weight: 700;
-    background: linear-gradient(120deg, var(--vll-accent) 30%, color-mix(in srgb, var(--vll-accent) 55%, #a78bfa));
-    -webkit-background-clip: text;
-    -webkit-text-fill-color: transparent;
-    background-clip: text;
+    color: var(--vll-accent);
     letter-spacing: 0.05em;
 }
 

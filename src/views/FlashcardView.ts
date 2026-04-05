@@ -167,6 +167,11 @@ export class FlashcardView extends ItemView {
         // 鍵盤快捷鍵 callback（keydown handler 在 onOpen 已註冊）
         this.ratingCallback = submit;
 
+        // rating bar 需要 focus，keydown 才能冒泡至 contentEl
+        bar.setAttribute('tabindex', '-1');
+        bar.style.outline = 'none';
+        setTimeout(() => bar.focus(), 0);
+
         for (const { r, label, cls, key } of ratings) {
             const wrap = bar.createDiv({ cls: 'vll-fc-btn-wrap' });
             const hint = preview[r];
