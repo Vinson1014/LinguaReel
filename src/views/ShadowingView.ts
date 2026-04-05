@@ -446,7 +446,13 @@ export class ShadowingView extends ItemView {
             // 前後各 2 條字幕合併為 context，並附加筆記 ai_summary（若有）
             const lo = Math.max(0, blockIdx - 2);
             const hi = Math.min(this.blocks.length - 1, blockIdx + 2);
-            let context = this.blocks.slice(lo, hi + 1).map(b => b.text).join(' ');
+            let context = this.blocks.slice(lo, hi + 1)
+                .map(b => {
+                    // Strip annotation block (translation/lesson HTML) — keep only original subtitle text
+                    const raw = b.text.split(/<div\s[^>]*class=['"]vll-ann-block/)[0] ?? b.text;
+                    return raw.replace(/<[^>]*>/g, '').replace(/\*\*/g, '').replace(/\s+/g, ' ').trim();
+                })
+                .join(' ');
             if (this.noteSummary) context += `\n[Content context: ${this.noteSummary}]`;
             const timestamp  = this.blocks[blockIdx]?.timestamp;
             const sourceFile = this.currentFile ? `[[${this.currentFile.basename}]]` : undefined;

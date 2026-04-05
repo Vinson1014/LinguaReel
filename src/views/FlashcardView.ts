@@ -100,9 +100,9 @@ export class FlashcardView extends ItemView {
         const badge = stateText(vocab.state);
         if (badge) front.createEl('span', { text: badge, cls: 'vll-fc-state-badge' });
 
-        // 上下文提示：讓大腦有記憶線索而非純強記
-        if (vocab.context) {
-            front.createEl('div', { text: vocab.context, cls: 'vll-fc-context-hint' });
+        // 例句提示：讓大腦有記憶線索而非純強記
+        if (vocab.example) {
+            front.createEl('div', { text: vocab.example, cls: 'vll-fc-context-hint' });
         }
 
         const showBtn = container.createEl('button', {
@@ -121,21 +121,32 @@ export class FlashcardView extends ItemView {
         cardEl.addClass('is-flipped');
         const back = cardEl.createDiv({ cls: 'vll-fc-back' });
 
+        // POS badge — 與字典結果一致
+        if (vocab.pos) {
+            back.createEl('span', { text: vocab.pos, cls: 'vll-dict-pos' });
+        }
+
+        // 定義列表 — 與字典結果一致
         if (vocab.definitions.length > 0) {
-            const defEl = back.createDiv({ cls: 'vll-fc-defs' });
-            if (vocab.pos) defEl.createEl('span', { text: vocab.pos, cls: 'vll-fc-pos' });
-            for (const d of vocab.definitions) {
-                defEl.createEl('div', { text: d, cls: 'vll-fc-def-item' });
-            }
+            const defList = back.createEl('ol', { cls: 'vll-dict-definitions' });
+            for (const d of vocab.definitions) defList.createEl('li', { text: d });
         }
+
+        // 例句框 — 與字典結果一致
         if (vocab.example) {
-            const ex = back.createDiv({ cls: 'vll-fc-example' });
-            ex.createEl('span', { text: '例：', cls: 'vll-fc-example-label' });
-            ex.createEl('div', { text: vocab.example });
+            const exBox = back.createDiv({ cls: 'vll-dict-example' });
+            exBox.createEl('div', { text: vocab.example, cls: 'vll-dict-ex-original' });
             if (vocab.exampleTranslation) {
-                ex.createEl('div', { text: vocab.exampleTranslation, cls: 'vll-fc-example-translation' });
+                exBox.createEl('div', { text: vocab.exampleTranslation, cls: 'vll-dict-ex-translation' });
             }
         }
+
+        // 上下文（字典的 notes 樣式）
+        if (vocab.context) {
+            back.createDiv({ text: vocab.context, cls: 'vll-dict-notes' });
+        }
+
+        // 來源
         if (vocab.sourceFile || vocab.timestamp) {
             const src = back.createDiv({ cls: 'vll-fc-source' });
             if (vocab.sourceFile) src.createEl('span', { text: vocab.sourceFile.replace(/^\[\[|\]\]$/g, '') });

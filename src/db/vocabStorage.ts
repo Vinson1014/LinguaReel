@@ -176,7 +176,9 @@ export class VocabStorage {
         const sourceVal = e.sourceFile ? `"${e.sourceFile}"` : '';
         const exampleQ    = e.example            ? `"${e.example.replace(/"/g, "'")}"` : '';
         const exTransQ    = e.exampleTranslation ? `"${e.exampleTranslation.replace(/"/g, "'")}"` : '';
-        const contextQ    = e.context            ? `"${e.context.replace(/"/g, "'")}"` : '';
+        const contextQ    = e.context
+            ? `"${e.context.replace(/\n|\r/g, ' ').replace(/"/g, "'").slice(0, 300)}"`
+            : '';
 
         const frontmatter = [
             '---',
@@ -214,7 +216,7 @@ export class VocabStorage {
             '',
             e.example ? `**例句**：${e.example}` : '',
             e.example ? '' : '',
-            e.context ? `**上下文**：*${e.context}*` : '',
+            e.context ? `**上下文**：*${e.context.replace(/\n|\r/g, ' ').slice(0, 300)}*` : '',
             e.context ? '' : '',
             e.sourceFile
                 ? `**來源**：${e.sourceFile}${e.timestamp ? ` \`${e.timestamp}\`` : ''}`
