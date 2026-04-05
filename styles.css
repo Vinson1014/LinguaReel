@@ -444,154 +444,377 @@
     display: flex;
     flex-direction: column;
     height: 100%;
-    padding: 8px;
+    overflow: hidden;
+}
+
+/* ── 頂部 compact 搜尋列（預設隱藏，.is-searching 時顯示）── */
+
+.vll-dict-search-wrap {
+    padding: 10px 10px 10px;
+    flex-shrink: 0;
+    border-bottom: 1px solid var(--background-modifier-border);
+    display: none;
+}
+.vll-dict-view.is-searching .vll-dict-search-wrap { display: block; }
+
+/* input + button 並排外層 */
+.vll-dict-search-row-wrap {
+    display: flex;
+    align-items: stretch;
     gap: 8px;
 }
 
+/* 只包 input 的有邊框容器 */
 .vll-dict-search-row {
     display: flex;
-    gap: 4px;
+    align-items: center;
+    flex: 1;
+    background: var(--background-secondary);
+    border: 1.5px solid var(--background-modifier-border);
+    border-radius: 9px;
+    padding: 0 12px;
+    transition: border-color 0.15s, box-shadow 0.15s;
+}
+.vll-dict-search-row:focus-within {
+    border-color: var(--vll-accent);
+    box-shadow: 0 0 0 3px color-mix(in srgb, var(--vll-accent) 15%, transparent);
 }
 
 .vll-dict-search-input {
     flex: 1;
-    padding: 4px 8px;
-    border: 1px solid var(--background-modifier-border);
-    border-radius: 4px;
-    background: var(--background-primary);
+    border: none !important;
+    outline: none !important;
+    box-shadow: none !important;
+    background: transparent !important;
     color: var(--text-normal);
-    font-size: 0.95em;
+    font-size: 0.93em;
+    padding: 8px 0;
+    min-width: 0;
 }
+.vll-dict-search-input::placeholder { color: var(--text-faint); }
 
+/* 獨立搜尋按鈕，在 border 外右側 */
 .vll-dict-search-btn {
-    padding: 4px 10px;
-    border-radius: 4px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0 12px;
+    background: var(--background-secondary);
+    border: 1.5px solid var(--background-modifier-border);
+    border-radius: 9px;
     cursor: pointer;
-    background: var(--vll-accent);
-    color: #fff;
-    border: none;
+    color: var(--text-muted);
+    flex-shrink: 0;
+    transition: color 0.15s, background 0.15s, border-color 0.15s;
 }
+.vll-dict-search-btn:hover {
+    color: var(--vll-accent);
+    border-color: var(--vll-accent);
+    background: color-mix(in srgb, var(--vll-accent) 8%, var(--background-secondary));
+}
+.vll-dict-search-btn svg { width: 14px; height: 14px; }
+
+/* ── 結果捲動區 ── */
 
 .vll-dict-result {
     flex: 1;
     overflow-y: auto;
+    padding: 0;                             /* hero 狀態：無 padding，讓 hero 填滿 */
 }
+.vll-dict-view.is-searching .vll-dict-result {
+    padding: 10px 10px 16px;               /* 有結果時恢復 padding */
+}
+
+/* ── 空狀態 ── */
+
+.vll-dict-empty {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    height: 100%;
+    min-height: 180px;
+    gap: 12px;
+    padding: 32px 20px;
+    text-align: center;
+}
+
+/* (舊 empty 類別已替換為 hero，保留殼避免衝突) */
+
+/* ── Hero（空狀態全版置中）── */
+
+.vll-dict-hero {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    height: 100%;
+    min-height: 240px;
+    gap: 12px;
+    padding: 24px 20px 32px;
+    text-align: center;
+}
+
+.vll-dict-hero-icon {
+    color: var(--vll-accent);
+    opacity: 0.6;
+    margin-bottom: 4px;
+}
+.vll-dict-hero-icon svg { width: 56px; height: 56px; }
+
+.vll-dict-hero-title {
+    font-size: 1.25em;
+    font-weight: 700;
+    color: var(--text-normal);
+    letter-spacing: 0.02em;
+    margin: 0;
+}
+
+.vll-dict-hero-tagline {
+    font-size: 0.80em;
+    color: var(--text-muted);
+    line-height: 1.65;
+    max-width: 180px;
+    margin: 0 0 6px;
+}
+
+/* 置中搜尋列 */
+/* input + button 並排的外層 row */
+.vll-dict-hero-row {
+    display: flex;
+    align-items: stretch;
+    width: 100%;
+    gap: 8px;
+}
+
+/* 只包 input 的有邊框容器 */
+.vll-dict-hero-search {
+    display: flex;
+    align-items: center;
+    flex: 1;
+    background: var(--background-secondary);
+    border: 2.5px solid var(--background-modifier-border);
+    border-radius: 12px;
+    padding: 0 14px;
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.10);
+    transition: border-color 0.15s, box-shadow 0.15s;
+}
+.theme-dark .vll-dict-hero-search {
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.30);
+}
+.vll-dict-hero-search:focus-within {
+    border-color: var(--vll-accent);
+    box-shadow: 0 0 0 4px color-mix(in srgb, var(--vll-accent) 15%, transparent),
+                0 4px 16px rgba(0, 0, 0, 0.10);
+}
+
+/* Obsidian 會對 input 注入 border/outline，必須強制覆蓋 */
+.vll-dict-hero-input {
+    flex: 1;
+    border: none !important;
+    outline: none !important;
+    box-shadow: none !important;
+    background: transparent !important;
+    color: var(--text-normal);
+    font-size: 1.05em;
+    padding: 14px 0;
+    min-width: 0;
+}
+.vll-dict-hero-input::placeholder { color: var(--text-faint); }
+
+/* 獨立的搜尋按鈕，在 border 外右側，自動撐到跟 input row 同高 */
+.vll-dict-hero-btn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0 14px;
+    background: var(--background-secondary);
+    border: 2.5px solid var(--background-modifier-border);
+    border-radius: 12px;
+    cursor: pointer;
+    color: var(--text-muted);
+    flex-shrink: 0;
+    transition: color 0.15s, background 0.15s, border-color 0.15s;
+}
+.vll-dict-hero-btn:hover {
+    color: var(--vll-accent);
+    border-color: var(--vll-accent);
+    background: color-mix(in srgb, var(--vll-accent) 8%, var(--background-secondary));
+}
+.vll-dict-hero-btn svg { width: 17px; height: 17px; }
+
+/* ── Loading / Error ── */
 
 .vll-dict-loading {
     display: flex;
     align-items: center;
-    gap: 8px;
-    padding: 16px 4px;
+    gap: 10px;
+    padding: 24px 4px;
     color: var(--text-muted);
+    font-size: 0.9em;
 }
 
 .vll-dict-error {
-    padding: 12px;
-    border-radius: 6px;
-    background: var(--background-modifier-error);
-    color: var(--text-error);
+    padding: 12px 14px;
+    border-radius: 8px;
+    background: color-mix(in srgb, var(--color-red) 10%, var(--background-secondary));
+    border: 1px solid color-mix(in srgb, var(--color-red) 28%, transparent);
+    color: var(--text-normal);
     font-size: 0.88em;
     word-break: break-word;
+    line-height: 1.55;
 }
+
+/* ── 結果卡片 ── */
 
 .vll-dict-card {
-    background: var(--vll-card-bg);
-    border: 1px solid var(--vll-card-border);
-    border-radius: 10px;
-    padding: 16px;
-    box-shadow: 0 1px 8px rgba(0,0,0,0.05);
+    background: var(--background-primary);
+    border: 1px solid var(--background-modifier-border);
+    border-radius: 12px;
+    overflow: hidden;
+    animation: vll-dict-appear 0.18s ease-out both;
+}
+@keyframes vll-dict-appear {
+    from { opacity: 0; transform: translateY(8px); }
+    to   { opacity: 1; transform: translateY(0); }
 }
 .theme-dark .vll-dict-card {
-    box-shadow: 0 1px 12px rgba(0,0,0,0.20);
+    box-shadow: 0 4px 24px rgba(0, 0, 0, 0.28);
 }
 
+/* 標題區 — accent 左框 + 深底色 */
 .vll-dict-header {
     display: flex;
     flex-direction: column;
-    gap: 4px;
-    margin-bottom: 14px;
-    padding-bottom: 12px;
+    gap: 6px;
+    padding: 18px 16px 14px 20px;
+    background: var(--background-secondary);
     border-bottom: 1px solid var(--background-modifier-border);
+    position: relative;
 }
-.vll-dict-tts-btn {
-    padding: 2px 6px;
-    opacity: 0.6;
-    line-height: 1;
+.vll-dict-header::before {
+    content: '';
+    position: absolute;
+    left: 0;
+    top: 0;
+    bottom: 0;
+    width: 4px;
+    background: var(--vll-accent);
+    border-radius: 1px 0 0 1px;
 }
-.vll-dict-tts-btn:hover { opacity: 1; }
 
 .vll-dict-word {
-    font-size: 2.4em;
+    font-size: 2.6em;
     font-weight: 700;
-    line-height: 1.15;
+    line-height: 1.1;
     color: var(--text-normal);
-    letter-spacing: 0.02em;
+    word-break: break-word;
 }
 
+/* 讀音：用等寬字型 + accent 色，像真正字典的音標 */
 .vll-dict-reading {
-    font-size: 1.05em;
-    color: var(--text-muted);
+    font-family: var(--font-monospace);
+    font-size: 0.95em;
+    color: var(--vll-accent);
+    opacity: 0.82;
     letter-spacing: 0.04em;
 }
 
 .vll-dict-pos {
     display: inline-block;
-    background: var(--vll-accent);
-    color: #fff;
+    background: color-mix(in srgb, var(--vll-accent) 14%, transparent);
+    color: var(--vll-accent);
+    border: 1px solid color-mix(in srgb, var(--vll-accent) 30%, transparent);
     border-radius: 4px;
-    padding: 1px 8px;
-    font-size: 0.75em;
+    padding: 1px 7px;
+    font-size: 0.68em;
+    font-weight: 700;
+    letter-spacing: 0.07em;
+    text-transform: uppercase;
+    align-self: flex-start;
 }
 
+/* 釋義 */
 .vll-dict-definitions {
-    margin: 0 0 10px 16px;
-    padding: 0;
-    font-size: 0.95em;
-    line-height: 1.6;
+    list-style: none;
+    counter-reset: def-counter;
+    padding: 4px 0;
+    margin: 0;
 }
 
+.vll-dict-definitions li {
+    counter-increment: def-counter;
+    display: flex;
+    gap: 10px;
+    padding: 9px 16px;
+    border-bottom: 1px solid var(--background-modifier-border);
+    font-size: 0.93em;
+    line-height: 1.65;
+}
+.vll-dict-definitions li:last-child { border-bottom: none; }
+
+.vll-dict-definitions li::before {
+    content: counter(def-counter);
+    color: var(--vll-accent);
+    font-weight: 700;
+    font-size: 0.8em;
+    min-width: 14px;
+    flex-shrink: 0;
+    padding-top: 3px;
+    opacity: 0.75;
+}
+
+/* 例句 */
 .vll-dict-example {
+    padding: 10px 16px 10px 13px;
     border-left: 3px solid var(--vll-accent);
-    padding: 6px 10px;
-    margin: 8px 0;
-    background: var(--background-secondary);
-    border-radius: 0 4px 4px 0;
+    background: color-mix(in srgb, var(--vll-accent) 5%, var(--background-primary));
+    border-top: 1px solid var(--background-modifier-border);
 }
 
 .vll-dict-ex-original {
-    margin: 0 0 2px;
+    font-size: 0.93em;
+    line-height: 1.75;
     font-style: italic;
+    color: var(--text-normal);
 }
 
 .vll-dict-ex-translation {
-    margin: 0;
+    font-size: 0.84em;
     color: var(--text-muted);
-    font-size: 0.9em;
+    margin-top: 3px;
+    font-style: normal;
 }
 
+/* 語法筆記 */
 .vll-dict-notes {
-    margin-top: 8px;
-    padding: 6px 10px;
-    background: var(--background-secondary);
-    border-radius: 4px;
-    font-size: 0.88em;
+    padding: 9px 16px;
+    font-size: 0.86em;
     color: var(--text-muted);
-    line-height: 1.5;
+    line-height: 1.6;
+    background: color-mix(in srgb, var(--color-yellow, #d4a72c) 7%, var(--background-primary));
+    border-top: 1px solid color-mix(in srgb, var(--color-yellow, #d4a72c) 22%, transparent);
 }
+.vll-dict-notes::before { content: '💡  '; }
 
+/* 操作按鈕欄 */
 .vll-dict-actions {
     display: flex;
     gap: 8px;
-    margin-top: 12px;
+    padding: 10px 16px;
+    border-top: 1px solid var(--background-modifier-border);
+    background: var(--background-secondary);
     flex-wrap: wrap;
+    align-items: center;
 }
 
 .vll-dict-ext-btn {
-    border: 1px solid var(--color-base-40);
+    border: 1px solid var(--background-modifier-border);
     color: var(--text-muted);
-    font-size: 0.82em;
+    font-size: 0.80em;
+    background: var(--background-primary);
+    padding: 3px 10px;
 }
-
 .vll-dict-ext-btn:hover {
     border-color: var(--vll-accent);
     color: var(--vll-accent);
