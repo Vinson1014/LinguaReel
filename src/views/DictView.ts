@@ -109,7 +109,7 @@ export class DictView extends ItemView {
         this.resultEl.empty();
         const card = this.resultEl.createDiv({ cls: 'vll-dict-card' });
 
-        // 標題行：單字 + 音標 + 詞性
+        // 標題行：單字 + 音標 + 詞性 + TTS
         const header = card.createDiv({ cls: 'vll-dict-header' });
         header.createEl('span', { text: word, cls: 'vll-dict-word' });
         if (data.reading) {
@@ -118,7 +118,6 @@ export class DictView extends ItemView {
         if (data.pos) {
             header.createEl('span', { text: data.pos, cls: 'vll-dict-pos' });
         }
-
         // 釋義列表
         const defList = card.createEl('ol', { cls: 'vll-dict-definitions' });
         for (const def of data.definitions) {
@@ -175,13 +174,14 @@ export class DictView extends ItemView {
             const now = Date.now();
             await this.plugin.vocabStorage.add({
                 word,
-                reading:     data.reading  || undefined,
-                pos:         data.pos      || undefined,
-                definitions: data.definitions,
-                example:     data.example?.original || undefined,
-                context:     this.lookupContext,
-                sourceFile:  this.lookupSourceFile,
-                timestamp:   this.lookupTimestamp,
+                reading:             data.reading  || undefined,
+                pos:                 data.pos      || undefined,
+                definitions:         data.definitions,
+                example:             data.example?.original    || undefined,
+                exampleTranslation:  data.example?.translation || undefined,
+                context:             this.lookupContext,
+                sourceFile:          this.lookupSourceFile,
+                timestamp:           this.lookupTimestamp,
                 tags:        [],
                 createdAt:   now,
                 // FSRS initial state

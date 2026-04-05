@@ -33,7 +33,7 @@ export function resolveSourceLang(annotationLanguage: string): string {
     const NAMES: Record<string, string> = {
         ja: 'Japanese',
         ko: 'Korean',
-        zh: 'Mandarin Chinese',
+        zh: 'Chinese',
         en: 'English',
         fr: 'French',
         de: 'German',
@@ -42,79 +42,112 @@ export function resolveSourceLang(annotationLanguage: string): string {
     return NAMES[annotationLanguage] ?? 'Japanese';
 }
 
-// ─── Language Pack ────────────────────────────────────────────────────────────
+// ─── Annotation Prompt Architecture ──────────────────────────────────────────
+//
+// The system prompt is assembled in two layers:
+//
+//   [Base layer]  — hardcoded in TypeScript; defines the JSON output schema and
+//                   core constraints (exact-substring rule, 0–3 limit, etc.)
+//                   Guarantees stable, parseable LLM output regardless of packs.
+//
+//   [Pack layer]  — loaded from VLL/language-packs/{code}.md in the vault.
+//                   Contains language-specific teaching style, annotation priorities,
+//                   and translation guidance. Users can freely edit this.
+//                   If the file is absent the base layer alone is used (still works).
+//
+// This decoupling means bad pack edits can degrade teaching quality but cannot
+// break JSON parsing.
 
-export interface LanguagePack {
-    id: string;
-    /** Display name shown in settings */
-    name: string;
-    /** System prompt injected into the annotation pipeline */
-    annotationSystemPrompt: string;
-}
-
-// ─── Japanese Language Pack ───────────────────────────────────────────────────
-
-function buildJaAnnotationPrompt(targetLang: string): string {
+/**
+ * Hardcoded base prompt — JSON schema + core constraints.
+ * Language-specific guidance is injected via packBody.
+ */
+function buildAnnotationBasePrompt(sourceLang: string, targetLang: string): string {
     return `\
-You are a senior Japanese language teacher and subtitle translator.
-Your task: translate a single Japanese subtitle line into ${targetLang} AND identify up to 3 grammar/vocabulary points worth teaching.
+You are a language teacher and subtitle translator helping a student learn ${sourceLang}.
+Your task: read a single subtitle line in ${sourceLang}, translate it into ${targetLang}, and identify up to 3 grammar or vocabulary points worth teaching.
 
 ## Output format — respond with JSON ONLY, no markdown, no HTML:
 {
-  "translation": "${targetLang} translation",
+  "translation": "${targetLang} translation of the subtitle",
   "annotations": [
     {
-      "original": "exact substring from the original Japanese text",
-      "key": "grammar point title, e.g. 〜てる",
-      "explanation": "concise explanation in ${targetLang} (1-2 sentences, natural language, relatable)",
-      "translation_word": "corresponding word in the translation (optional)"
+      "original": "exact substring from the original ${sourceLang} text — never paraphrase",
+      "key": "grammar point or vocabulary title",
+      "explanation": "concise explanation in ${targetLang} (1-2 sentences)",
+      "translation_word": "corresponding word/phrase in the translation (optional)"
     }
   ]
 }
 
-## Translation rules
-- Match the character's tone — casual speech stays casual, formal stays formal
-- Don't over-translate; natural ${targetLang} > literal accuracy
-- Condense redundant filler words (あの、えっと repeated) but keep grammatically meaningful ones
-- Preserve speaker personality (energetic, shy, formal, etc.)
-
-## Annotation rules
-- Annotate 0–3 points per line; prefer 0–2; NEVER exceed 3
-- Priority order:
-  1. High-frequency idioms, mimetics/onomatopoeia (めっちゃ, どんどん, ワクワク)
-  2. Verb conjugation forms (〜てる, 〜ちゃう, 〜とく, 〜なきゃ)
-  3. Particles or sentence-final particles with special nuance
-- DO NOT annotate: basic kanji (学校/天気/映画), standard は/を/が usage, words >5 kanji unless rare/technical
-- ALWAYS annotate keigo; include politeness nuance in the explanation
-- "original" MUST be an exact substring of the input text — never paraphrase or shorten it
-
-## Lesson writing guide
-- One or two sentences max, written in ${targetLang}
-- Explain the specific use IN THIS sentence, then show transferability
-- Use everyday ${targetLang}, not academic Japanese grammar terminology`;
+## Core rules
+- "original" MUST be an exact substring of the input — never paraphrase, never shorten
+- Annotate 0–3 points per line; NEVER exceed 3
+- If nothing notable, return an empty annotations array`;
 }
 
-export const LANGUAGE_PACKS: Record<string, LanguagePack> = {
-    ja: {
-        id:   'ja',
-        name: '日本語 (Japanese)',
-        // annotationSystemPrompt is built dynamically; this is kept as a fallback
-        annotationSystemPrompt: buildJaAnnotationPrompt('Traditional Chinese'),
-    },
-};
+/**
+ * Built-in Japanese pack body — used as fallback when VLL/language-packs/ja.md
+ * does not exist yet. Mirrors the content written on first plugin load.
+ */
+const JA_PACK_BODY = `\
+## Japanese-specific teaching guidelines
 
+**Translation style**
+- Match the character's tone — casual speech stays casual, formal stays formal
+- Natural output > literal accuracy; avoid over-translation
+- Condense repeated filler words (あの、えっと) but keep grammatically meaningful ones
+- Preserve speaker personality (energetic, shy, formal, etc.)
+
+**Annotation priority** (in order)
+1. High-frequency idioms and mimetics/onomatopoeia (めっちゃ, どんどん, ワクワク)
+2. Verb conjugation forms and contractions (〜てる, 〜ちゃう, 〜とく, 〜なきゃ)
+3. Particles and sentence-final particles with special nuance
+
+**Skip these** — too common to annotate
+- Basic vocabulary (学校、天気、映画 and other everyday JLPT N5/N4 words)
+- Standard particle usage (は、を、が with no special nuance)
+
+**Always annotate** keigo (polite/honorific speech) — explain the politeness level and nuance specifically.
+
+**Explanation style**
+- One or two sentences maximum
+- Explain the specific use in this sentence, then show how it transfers to other contexts
+- Write naturally — avoid academic grammar terminology`;
+
+/**
+ * Build the final annotation system prompt.
+ *
+ * @param annotationLanguage  Learning language code ('ja', 'ko', etc.) or 'custom'
+ * @param customPrompt        Used verbatim when annotationLanguage === 'custom'
+ * @param outputLanguage      Language for AI output (translations, explanations)
+ * @param uiLanguage          Plugin UI language (fallback for outputLanguage auto)
+ * @param packBody            Body of the language pack .md file (frontmatter stripped).
+ *                            When provided, appended after the base prompt.
+ *                            When undefined, falls back to built-in pack for 'ja',
+ *                            or uses base prompt alone for other languages.
+ */
 export function getAnnotationSystemPrompt(
     annotationLanguage: string,
     customPrompt:       string,
     outputLanguage:     OutputLanguage = 'auto',
     uiLanguage:         UILanguage     = 'auto',
+    packBody?:          string,
 ): string {
     if (annotationLanguage === 'custom') return customPrompt;
+
     const targetLang = resolveOutputLang(outputLanguage, uiLanguage);
-    if (annotationLanguage === 'ja') return buildJaAnnotationPrompt(targetLang);
-    // fallback to pack's stored prompt if available
-    return LANGUAGE_PACKS[annotationLanguage]?.annotationSystemPrompt
-        ?? buildJaAnnotationPrompt(targetLang);
+    const sourceLang = resolveSourceLang(annotationLanguage);
+    const base       = buildAnnotationBasePrompt(sourceLang, targetLang);
+
+    // User-supplied pack takes priority
+    if (packBody) return base + '\n\n' + packBody;
+
+    // Built-in fallback for Japanese
+    if (annotationLanguage === 'ja') return base + '\n\n' + JA_PACK_BODY;
+
+    // For all other languages without a pack, the base prompt is sufficient
+    return base;
 }
 
 // ─── Subtitle Summary Prompt ──────────────────────────────────────────────────

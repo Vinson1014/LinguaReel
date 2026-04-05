@@ -23,7 +23,7 @@ export class NoteGenerator {
     static generate(
         video: VideoInfo,
         subtitles: SubtitleEntry[],
-        settings: Pick<VLLSettings, 'defaultSubtitleLang'>
+        settings: Pick<VLLSettings, 'annotationLanguage'>
     ): string {
         const today = new Date().toISOString().split('T')[0];
 
@@ -31,7 +31,7 @@ export class NoteGenerator {
             '---',
             `title: "${video.title.replace(/"/g, "'")}"`,
             `source: ${video.source}`,
-            `language: ${settings.defaultSubtitleLang}`,
+            `language: ${settings.annotationLanguage}`,
             `imported: ${today}`,
             '---',
         ].join('\n');

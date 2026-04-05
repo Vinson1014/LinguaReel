@@ -51,7 +51,9 @@ export interface VocabEntry {
     reading?:    string;
     pos?:        string;
     definitions: string[];
-    example?:    string;
+    example?:            string;
+    /** LLM 生成的例句翻譯（閃卡背面顯示） */
+    exampleTranslation?: string;
     /** 來源筆記的 wikilink，例如 "[[Note Name]]" */
     sourceFile?: string;
     /** 在影片中的時間戳，例如 "03:57" */
@@ -192,7 +194,6 @@ export interface VLLSettings {
 
     // ── 跟讀 / 影片 ───────────────────────────────
     shadowingOutputFolder: string;
-    defaultSubtitleLang:   string;
     subtitleMergeGap:      number;
     maxLineLength:         number;
 

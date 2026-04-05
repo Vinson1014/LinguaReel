@@ -1,7 +1,8 @@
-import { App, PluginSettingTab, Setting } from 'obsidian';
+import { App, Notice, PluginSettingTab, Setting, TFile } from 'obsidian';
 import type VLLPlugin from './main';
 import { t } from './i18n';
 import type { OutputLanguage, ProviderProfile, VLLSettings } from './types';
+import { LANGUAGE_PACK_FOLDER } from './constants';
 
 // ===== Provider 預設值（首次切換時使用） =====
 
@@ -38,7 +39,6 @@ export const DEFAULT_SETTINGS: VLLSettings = {
 
     // 跟讀
     shadowingOutputFolder: 'Shadowing',
-    defaultSubtitleLang:   'en',
     subtitleMergeGap:      1.5,
     maxLineLength:         80,
 
@@ -233,7 +233,13 @@ export class VLLSettingTab extends PluginSettingTab {
             .setName(t('settings.ai.annotationLang'))
             .setDesc(t('settings.ai.annotationLangDesc'))
             .addDropdown(dd => {
-                dd.addOption('ja', t('settings.ai.langJa'));
+                dd.addOption('ja',     t('settings.ai.langJa'));
+                dd.addOption('ko',     t('settings.ai.langKo'));
+                dd.addOption('zh',     t('settings.ai.langZh'));
+                dd.addOption('en',     t('settings.ai.langEn'));
+                dd.addOption('fr',     t('settings.ai.langFr'));
+                dd.addOption('de',     t('settings.ai.langDe'));
+                dd.addOption('es',     t('settings.ai.langEs'));
                 dd.addOption('custom', t('settings.ai.langCustom'));
                 dd.setValue(this.plugin.settings.annotationLanguage);
                 dd.onChange(async v => {
@@ -242,6 +248,26 @@ export class VLLSettingTab extends PluginSettingTab {
                     this.display();
                 });
             });
+
+        // 開啟語言包按鈕（custom 模式不需要，因為有下方的 prompt 輸入框）
+        if (this.plugin.settings.annotationLanguage !== 'custom') {
+            new Setting(el)
+                .setName(t('settings.ai.openPack'))
+                .setDesc(t('settings.ai.openPackDesc'))
+                .addButton(btn => btn
+                    .setButtonText(t('settings.ai.openPackBtn'))
+                    .onClick(async () => {
+                        const lang     = this.plugin.settings.annotationLanguage;
+                        const packPath = `${LANGUAGE_PACK_FOLDER}/${lang}.md`;
+                        const packFile = this.plugin.app.vault.getAbstractFileByPath(packPath);
+                        if (packFile instanceof TFile) {
+                            await this.plugin.app.workspace.getLeaf(false).openFile(packFile);
+                        } else {
+                            new Notice(`Language pack not found: ${packPath}`);
+                        }
+                    })
+                );
+        }
 
         if (this.plugin.settings.annotationLanguage === 'custom') {
             new Setting(el)
@@ -319,18 +345,6 @@ export class VLLSettingTab extends PluginSettingTab {
                 .setValue(this.plugin.settings.shadowingOutputFolder)
                 .onChange(async v => {
                     this.plugin.settings.shadowingOutputFolder = v.trim();
-                    await this.plugin.saveSettings();
-                })
-            );
-
-        new Setting(el)
-            .setName(t('settings.shadowing.subtitleLang'))
-            .setDesc(t('settings.shadowing.subtitleLangDesc'))
-            .addText(text => text
-                .setPlaceholder('en')
-                .setValue(this.plugin.settings.defaultSubtitleLang)
-                .onChange(async v => {
-                    this.plugin.settings.defaultSubtitleLang = v.trim() || 'en';
                     await this.plugin.saveSettings();
                 })
             );

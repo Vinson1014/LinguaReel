@@ -30,3 +30,8 @@ export const EVENT_VOCAB_UPDATED = 'vll:vocab-updated';
 export const EVENT_REVIEW_DONE = 'vll:review-done';
 /** 標注任務狀態更新事件（HomeView 訂閱此事件刷新 jobs section） */
 export const EVENT_ANNOTATION_JOB = 'vll:annotation-job-update';
+
+// ===== 語言包 =====
+
+/** Vault 內語言包 .md 檔的存放資料夾（使用者可直接編輯） */
+export const LANGUAGE_PACK_FOLDER = 'VLL/language-packs';

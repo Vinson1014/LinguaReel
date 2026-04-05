@@ -106,7 +106,7 @@ export class ImportModal extends Modal {
         try {
             this.showProgress('正在抓取字幕（Tier 0 - 零依賴模式）...');
             const { subtitles, video } = await YouTubeTranscript.fetch(
-                url, this.settings.defaultSubtitleLang
+                url, this.settings.annotationLanguage
             );
             this.showProgress(`取得 ${subtitles.length} 條字幕，正在合併整理...`);
             const merged = SubtitleParser.mergeShortEntries(subtitles, this.settings.subtitleMergeGap);
@@ -122,7 +122,7 @@ export class ImportModal extends Modal {
             const ytdlp = new YtDlpRunner(this.settings.ytdlpPath);
             const [videoInfo, subtitlePath] = await Promise.all([
                 ytdlp.getVideoInfo(url),
-                ytdlp.downloadSubtitle(url, this.settings.defaultSubtitleLang),
+                ytdlp.downloadSubtitle(url, this.settings.annotationLanguage),
             ]);
 
             if (subtitlePath) {
@@ -146,7 +146,7 @@ export class ImportModal extends Modal {
                 );
                 const vttPath   = await whisper.transcribe(
                     audioPath, undefined,
-                    this.settings.defaultSubtitleLang,
+                    this.settings.annotationLanguage,
                     msg => this.showProgress(msg)
                 );
                 const subtitles = SubtitleParser.parseVTT(fs.readFileSync(vttPath, 'utf-8'));
@@ -176,7 +176,7 @@ export class ImportModal extends Modal {
         );
         const vttPath  = await whisper.transcribe(
             filePath, undefined,
-            this.settings.defaultSubtitleLang,
+            this.settings.annotationLanguage,
             msg => this.showProgress(msg)
         );
         const subtitles = SubtitleParser.parseVTT(fs.readFileSync(vttPath, 'utf-8'));

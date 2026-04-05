@@ -23,6 +23,7 @@ import {
     VIEW_TYPE_FLASHCARD,
     VIEW_TYPE_SHADOWING,
     EVENT_ANNOTATION_JOB,
+    LANGUAGE_PACK_FOLDER,
 } from './constants';
 import type { AnnotationJob, VLLSettings, EnvironmentStatus } from './types';
 
@@ -141,6 +142,9 @@ export default class VLLPlugin extends Plugin {
             })
         );
 
+        // 確保語言包資料夾和預設 .md 檔存在（不阻擋 onload，背景執行）
+        void this.ensureLanguagePacksExist();
+
         console.log('[VLL] 插件已載入');
     }
 
@@ -159,6 +163,42 @@ export default class VLLPlugin extends Plugin {
 
     async saveSettings(): Promise<void> {
         await this.saveData(this.settings);
+    }
+
+    // ===================================================
+    //  語言包管理
+    // ===================================================
+
+    /**
+     * 在 vault 內建立語言包資料夾和預設 .md 檔（首次載入或檔案遺失時執行）。
+     * 每個支援語言都會建立對應的 {code}.md；使用者可直接在 vault 內編輯。
+     */
+    private async ensureLanguagePacksExist(): Promise<void> {
+        const folder = LANGUAGE_PACK_FOLDER;
+        if (!this.app.vault.getAbstractFileByPath(folder)) {
+            await this.app.vault.createFolder(folder);
+        }
+        for (const [code, content] of Object.entries(DEFAULT_LANGUAGE_PACKS)) {
+            const filePath = `${folder}/${code}.md`;
+            if (!this.app.vault.getAbstractFileByPath(filePath)) {
+                await this.app.vault.create(filePath, content);
+            }
+        }
+    }
+
+    /**
+     * 從 vault 讀取指定語言的語言包 body（frontmatter 已剝除）。
+     * 若檔案不存在則回傳 undefined，由 getAnnotationSystemPrompt 使用內建 fallback。
+     */
+    private async loadLanguagePackBody(lang: string): Promise<string | undefined> {
+        const filePath = `${LANGUAGE_PACK_FOLDER}/${lang}.md`;
+        const file     = this.app.vault.getAbstractFileByPath(filePath);
+        if (!(file instanceof TFile)) return undefined;
+        const content = await this.app.vault.read(file);
+        // 剝除 YAML frontmatter（--- ... ---），回傳純 body
+        const match = content.match(/^---\n[\s\S]*?\n---\n*([\s\S]*)$/);
+        const body  = match ? (match[1] ?? content) : content;
+        return body.trim() || undefined;
     }
 
     // ===================================================
@@ -239,11 +279,14 @@ export default class VLLPlugin extends Plugin {
             job.total = entries.length;
             this._emitJobUpdate();
 
+            // 從 vault 載入語言包 body（使用者可自訂教學風格）
+            const packBody = await this.loadLanguagePackBody(this.settings.annotationLanguage);
             let systemPrompt = getAnnotationSystemPrompt(
                 this.settings.annotationLanguage,
                 this.settings.annotationSystemPrompt,
                 this.settings.outputLanguage,
                 this.settings.uiLanguage,
+                packBody,
             );
 
             // 在正式標注前先取得字幕摘要：優先讀 frontmatter 快取，避免重複 API 呼叫
@@ -403,3 +446,199 @@ export default class VLLPlugin extends Plugin {
         );
     }
 }
+
+// ─── 預設語言包內容（首次載入時寫入 vault） ───────────────────────────────────
+//
+// frontmatter 僅供人閱讀，插件只讀取 body（--- 以下的部分）。
+// 使用者可自由修改 body，不會影響 JSON 解析穩定性。
+
+const DEFAULT_LANGUAGE_PACKS: Record<string, string> = {
+
+    ja: `---
+language: Japanese
+code: ja
+---
+
+## Japanese-specific teaching guidelines
+
+**Translation style**
+- Match the character's tone — casual speech stays casual, formal stays formal
+- Natural output > literal accuracy; avoid over-translation
+- Condense repeated filler words (あの、えっと) but keep grammatically meaningful ones
+- Preserve speaker personality (energetic, shy, formal, etc.)
+
+**Annotation priority** (in order)
+1. High-frequency idioms and mimetics/onomatopoeia (めっちゃ, どんどん, ワクワク)
+2. Verb conjugation forms and contractions (〜てる, 〜ちゃう, 〜とく, 〜なきゃ)
+3. Particles and sentence-final particles with special nuance
+
+**Skip these** — too common to annotate
+- Basic vocabulary (学校、天気、映画 and other everyday JLPT N5/N4 words)
+- Standard particle usage (は、を、が with no special nuance)
+
+**Always annotate** keigo (polite/honorific speech) — explain the politeness level and nuance specifically.
+
+**Explanation style**
+- One or two sentences maximum
+- Explain the specific use in this sentence, then show how it transfers to other contexts
+- Write naturally — avoid academic grammar terminology
+`,
+
+    ko: `---
+language: Korean
+code: ko
+---
+
+## Korean-specific teaching guidelines
+
+**Translation style**
+- Preserve speech level — formal (합쇼체) and informal (해요체) should stay distinct
+- Natural output > literal accuracy
+- Keep emotionally nuanced sentence endings intact
+
+**Annotation priority** (in order)
+1. Sentence-final endings that convey nuance (~잖아요, ~거든요, ~는데, ~네요)
+2. Verb/adjective conjugation patterns (~아/어서, ~(으)ㄴ데, ~고 싶다)
+3. Honorific and humble verb forms (드리다, 여쭤보다, 드시다)
+
+**Skip these** — too basic to annotate
+- Simple conjunctions (그리고, 하지만) unless used in a noteworthy way
+- Common everyday vocabulary at beginner level
+
+**Explanation style**
+- One or two sentences maximum
+- Connect the pattern to real-life situations the learner would encounter
+`,
+
+    zh: `---
+language: Chinese
+code: zh
+---
+
+## Chinese-specific teaching guidelines
+
+**Translation style**
+- Preserve tone and register — colloquial stays colloquial, formal stays formal
+- Keep chengyu and set phrases intact; explain them in annotations
+- Natural output — avoid word-for-word translation
+
+**Annotation priority** (in order)
+1. 成語 and common set phrases (慣用語)
+2. Aspect markers and particles (了、著、過、的／地／得)
+3. Grammar patterns (是…的, 把字句, 被字句)
+4. Measure words in tricky or non-obvious pairings
+
+**Skip these** — too common to annotate
+- Basic measure words (一個、一本、一張) in standard usage
+- Simple conjunctions (和、但是) unless in idiomatic context
+
+**Explanation style**
+- One or two sentences maximum
+- Include zhuyin or pinyin for any annotated vocabulary
+`,
+
+    en: `---
+language: English
+code: en
+---
+
+## English-specific teaching guidelines
+
+**Translation style**
+- Preserve register — formal, informal, and slang should stay distinct
+- Translate idioms and phrasal verbs by meaning, not literally
+- Keep cultural references; explain them in annotations when non-obvious
+
+**Annotation priority** (in order)
+1. Idioms and phrasal verbs (give up, run into, bite the bullet)
+2. Colloquial reductions and contractions (gonna, wanna, kinda, y'all)
+3. Modal verbs with nuanced meaning (might, should, could in context)
+
+**Skip these** — too basic to annotate
+- Simple vocabulary that intermediate learners already know
+- Regular verb conjugations with no special nuance
+
+**Explanation style**
+- One or two sentences maximum
+- Give a real-world context or an equivalent native phrasing
+`,
+
+    fr: `---
+language: French
+code: fr
+---
+
+## French-specific teaching guidelines
+
+**Translation style**
+- Preserve register — formal (vous) vs informal (tu) should stay distinct
+- Translate idioms and expressions by meaning, not word-for-word
+- Keep colloquial contractions natural in casual speech
+
+**Annotation priority** (in order)
+1. Subjunctive usage (que je sois, il faut que, bien que...)
+2. Idiomatic expressions and false cognates with English
+3. Register differences (tu/vous, passé composé vs imparfait nuance)
+
+**Skip these** — too basic
+- Basic conjugations of avoir/être in simple tenses
+- Simple prepositions (à, de, en) without special nuance
+
+**Explanation style**
+- One or two sentences maximum
+- Highlight why French uses this form vs an alternative the learner might expect
+`,
+
+    de: `---
+language: German
+code: de
+---
+
+## German-specific teaching guidelines
+
+**Translation style**
+- Preserve formal (Sie) vs informal (du) register distinctions
+- German word order doesn't map 1:1 — translate for natural output
+- Keep compound words visible; explain noteworthy ones in annotations
+
+**Annotation priority** (in order)
+1. Separable verbs in use (anfangen, aufhören — note the separated prefix)
+2. Case usage in context (especially Dativ vs Akkusativ distinctions)
+3. Modal particles with nuance (doch, mal, ja, eigentlich, halt)
+
+**Skip these** — too basic
+- Regular noun cases in standard prepositional phrases already drilled
+- Basic auxiliary (haben/sein) in simple sentences
+
+**Explanation style**
+- One or two sentences maximum
+- Explain the grammatical trigger when relevant (e.g. "Dativ because of mit")
+`,
+
+    es: `---
+language: Spanish
+code: es
+---
+
+## Spanish-specific teaching guidelines
+
+**Translation style**
+- Preserve formal (usted) vs informal (tú/vos) register
+- Note regional differences if apparent (vosotros vs ustedes)
+- Natural output — avoid calque translations from English
+
+**Annotation priority** (in order)
+1. Subjunctive usage (que + subjunctive, hypothetical si clauses)
+2. Ser vs estar in non-obvious or commonly confused cases
+3. Reflexive verbs with changed meaning (ir vs irse, dormir vs dormirse)
+4. Idiomatic expressions unique to Spanish
+
+**Skip these** — too basic
+- Regular -ar/-er/-ir conjugations in simple tenses
+- Common connectors (y, pero, porque) in straightforward usage
+
+**Explanation style**
+- One or two sentences maximum
+- Compare with a common learner mistake or an English false cognate if relevant
+`,
+};

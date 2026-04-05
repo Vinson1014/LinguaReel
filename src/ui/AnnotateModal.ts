@@ -102,6 +102,8 @@ export class AnnotateModal extends Modal {
             const systemPrompt = getAnnotationSystemPrompt(
                 this.plugin.settings.annotationLanguage,
                 this.plugin.settings.annotationSystemPrompt,
+                this.plugin.settings.outputLanguage,
+                this.plugin.settings.uiLanguage,
             );
 
             const pipeline = new AnnotationPipeline(this.plugin.llm);
