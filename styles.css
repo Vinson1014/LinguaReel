@@ -52,6 +52,29 @@
     font-size: 0.9em;
 }
 
+/* ── 薄 Scrollbar（Chromium / Electron）─────────────────────── */
+
+.vll-highlight-list::-webkit-scrollbar,
+.vll-dict-result::-webkit-scrollbar,
+.vll-flashcard-view::-webkit-scrollbar,
+.vll-blocks-container::-webkit-scrollbar,
+.vll-home-view::-webkit-scrollbar { width: 4px; }
+
+.vll-highlight-list::-webkit-scrollbar-thumb,
+.vll-dict-result::-webkit-scrollbar-thumb,
+.vll-flashcard-view::-webkit-scrollbar-thumb,
+.vll-blocks-container::-webkit-scrollbar-thumb,
+.vll-home-view::-webkit-scrollbar-thumb {
+    background: var(--background-modifier-border);
+    border-radius: 2px;
+}
+
+.vll-highlight-list::-webkit-scrollbar-track,
+.vll-dict-result::-webkit-scrollbar-track,
+.vll-flashcard-view::-webkit-scrollbar-track,
+.vll-blocks-container::-webkit-scrollbar-track,
+.vll-home-view::-webkit-scrollbar-track { background: transparent; }
+
 .vll-btn-primary {
     background: var(--vll-accent);
     color: #fff;
@@ -260,7 +283,10 @@
 .vll-home-logo {
     font-size: 1.6em;
     font-weight: 700;
-    color: var(--vll-accent);
+    background: linear-gradient(120deg, var(--vll-accent) 30%, color-mix(in srgb, var(--vll-accent) 55%, #a78bfa));
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
     letter-spacing: 0.05em;
 }
 
@@ -319,12 +345,16 @@
     border: 1px solid var(--vll-card-border);
     border-radius: 10px;
     cursor: pointer;
-    transition: border-color 0.15s, box-shadow 0.15s;
+    transition: border-color 0.18s, box-shadow 0.18s, transform 0.18s;
 }
 
 .vll-home-card:hover {
     border-color: var(--vll-accent);
-    box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+    box-shadow: 0 6px 20px rgba(0,0,0,0.10);
+    transform: translateY(-2px);
+}
+.theme-dark .vll-home-card:hover {
+    box-shadow: 0 6px 20px rgba(0,0,0,0.30);
 }
 
 .vll-home-card-icon {
@@ -470,16 +500,21 @@
 .vll-dict-card {
     background: var(--vll-card-bg);
     border: 1px solid var(--vll-card-border);
-    border-radius: 8px;
-    padding: 12px;
+    border-radius: 10px;
+    padding: 16px;
+    box-shadow: 0 1px 8px rgba(0,0,0,0.05);
+}
+.theme-dark .vll-dict-card {
+    box-shadow: 0 1px 12px rgba(0,0,0,0.20);
 }
 
 .vll-dict-header {
     display: flex;
-    align-items: center;
-    gap: 8px;
-    flex-wrap: wrap;
-    margin-bottom: 8px;
+    flex-direction: column;
+    gap: 4px;
+    margin-bottom: 14px;
+    padding-bottom: 12px;
+    border-bottom: 1px solid var(--background-modifier-border);
 }
 .vll-dict-tts-btn {
     padding: 2px 6px;
@@ -489,13 +524,17 @@
 .vll-dict-tts-btn:hover { opacity: 1; }
 
 .vll-dict-word {
-    font-size: 1.5em;
-    font-weight: 600;
+    font-size: 2.4em;
+    font-weight: 700;
+    line-height: 1.15;
+    color: var(--text-normal);
+    letter-spacing: 0.02em;
 }
 
 .vll-dict-reading {
-    font-size: 0.95em;
+    font-size: 1.05em;
     color: var(--text-muted);
+    letter-spacing: 0.04em;
 }
 
 .vll-dict-pos {
@@ -1098,8 +1137,12 @@
 }
 
 .vll-shadowing-item.active {
-    background: var(--background-secondary);
-    border-left-color: var(--color-accent);
+    background: color-mix(in srgb, var(--vll-accent) 10%, var(--background-secondary));
+    border-left-color: var(--vll-accent);
+    border-left-width: 4px;
+}
+.vll-shadowing-item.active .vll-block-text {
+    font-weight: 500;
 }
 
 .vll-shadowing-item:hover {
@@ -1216,8 +1259,32 @@
 /* Stats bar */
 .vll-fc-stats {
     display: flex;
-    gap: 8px;
+    gap: 6px;
     flex-wrap: wrap;
+}
+
+/* Stat chips used by FlashcardView */
+.vll-chip {
+    display: inline-flex;
+    align-items: baseline;
+    gap: 3px;
+    padding: 4px 10px;
+    border-radius: 8px;
+    background: var(--background-secondary);
+    border: 1px solid var(--background-modifier-border);
+}
+.vll-chip-num {
+    font-size: 1.15em;
+    font-weight: 700;
+    color: var(--text-normal);
+    line-height: 1;
+}
+.vll-chip-label {
+    font-size: 0.78em;
+    color: var(--text-muted);
+}
+.vll-chip.vll-chip-warn .vll-chip-num {
+    color: var(--color-orange, #f59e0b);
 }
 
 /* Card */
@@ -1225,19 +1292,33 @@
     border: 1px solid var(--background-modifier-border);
     border-radius: 12px;
     overflow: hidden;
+    box-shadow: 0 2px 16px rgba(0, 0, 0, 0.07);
+}
+.theme-dark .vll-fc-card {
+    box-shadow: 0 2px 24px rgba(0, 0, 0, 0.28);
 }
 
 .vll-fc-front {
-    padding: 32px 24px 24px;
+    padding: 36px 24px 28px;
     text-align: center;
     background: var(--background-primary);
+    position: relative;
+    overflow: hidden;
+}
+.vll-fc-front::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: radial-gradient(ellipse at 50% -20%, color-mix(in srgb, var(--vll-accent) 12%, transparent), transparent 60%);
+    pointer-events: none;
 }
 
 .vll-fc-word {
-    font-size: 2.2em;
+    font-size: 2.4em;
     font-weight: 700;
     color: var(--text-normal);
-    margin-bottom: 8px;
+    margin-bottom: 6px;
+    position: relative;
 }
 
 .vll-fc-reading {
@@ -1303,10 +1384,13 @@
 .vll-fc-context-hint {
     font-size: 0.82em;
     color: var(--text-muted);
-    margin-top: 12px;
+    margin-top: 14px;
     padding: 6px 10px;
-    border-left: 3px solid var(--background-modifier-border);
+    border-left: 3px solid var(--vll-accent);
+    background: color-mix(in srgb, var(--vll-accent) 8%, transparent);
+    border-radius: 0 4px 4px 0;
     line-height: 1.5;
+    text-align: left;
 }
 
 /* 背面：例句翻譯 */
@@ -1364,6 +1448,25 @@
 .vll-fc-btn-hard:hover  { background: #f9731644; }
 .vll-fc-btn-good:hover  { background: #22c55e44; }
 .vll-fc-btn-easy:hover  { background: #3b82f644; }
+
+/* Rating button keyboard key badge */
+.vll-fc-rating-key {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 16px;
+    height: 16px;
+    border: 1.5px solid currentColor;
+    border-radius: 3px;
+    font-size: 0.72em;
+    font-family: var(--font-monospace);
+    font-style: normal;
+    opacity: 0.60;
+    margin-right: 5px;
+    vertical-align: middle;
+    line-height: 1;
+    flex-shrink: 0;
+}
 
 /* Empty state */
 .vll-fc-empty {

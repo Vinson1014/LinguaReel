@@ -172,10 +172,11 @@ export class FlashcardView extends ItemView {
             const hint = preview[r];
             if (hint) wrap.createEl('span', { text: hint, cls: 'vll-fc-interval-hint' });
             const btn = wrap.createEl('button', {
-                text: `${key} ${label}`,
                 cls: `vll-btn vll-fc-rating-btn ${cls}`,
                 attr: { title: `Press ${key}` },
             });
+            btn.createEl('kbd', { text: key, cls: 'vll-fc-rating-key' });
+            btn.createEl('span', { text: label });
             btn.addEventListener('click', () => submit(r));
         }
     }
