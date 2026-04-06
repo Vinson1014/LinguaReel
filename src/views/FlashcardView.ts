@@ -243,9 +243,18 @@ export class FlashcardView extends ItemView {
         this.queueIdx++;
         this.doneToday++;
 
-        // "Again" → 放回隊列末尾
+        // "Again" → 放回隊列末尾（同步所有 FSRS 欄位，避免同 session 重算時用舊參數）
         if (rating === Rating.Again) {
-            this.dueCards.push({ ...vocab, state: next.state as number });
+            this.dueCards.push({
+                ...vocab,
+                due:        next.due.getTime(),
+                stability:  next.stability,
+                difficulty: next.difficulty,
+                reps:       next.reps,
+                lapses:     next.lapses,
+                state:      next.state as number,
+                lastReview: now.getTime(),
+            });
         }
 
         this.render();
