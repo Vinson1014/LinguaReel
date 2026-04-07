@@ -50,7 +50,7 @@ export function resolveSourceLang(annotationLanguage: string): string {
 //                   core constraints (exact-substring rule, 0–3 limit, etc.)
 //                   Guarantees stable, parseable LLM output regardless of packs.
 //
-//   [Pack layer]  — loaded from VLL/language-packs/{code}.md in the vault.
+//   [Pack layer]  — loaded from LinguaReel/language-packs/{code}.md in the vault.
 //                   Contains language-specific teaching style, annotation priorities,
 //                   and translation guidance. Users can freely edit this.
 //                   If the file is absent the base layer alone is used (still works).
@@ -87,7 +87,7 @@ Your task: read a single subtitle line in ${sourceLang}, translate it into ${tar
 }
 
 /**
- * Built-in Japanese pack body — used as fallback when VLL/language-packs/ja.md
+ * Built-in Japanese pack body — used as fallback when LinguaReel/language-packs/ja.md
  * does not exist yet. Mirrors the content written on first plugin load.
  */
 const JA_PACK_BODY = `\

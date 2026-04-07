@@ -7,11 +7,11 @@ import { LANGUAGE_PACK_FOLDER } from './constants';
 // ===== Provider 預設值（首次切換時使用） =====
 
 export const PROVIDER_DEFAULTS: Record<string, ProviderProfile> = {
-    openai:     { baseUrl: 'https://api.openai.com/v1',                               apiKey: '', modelFast: 'gpt-4o-mini',             modelPowerful: 'gpt-4o' },
-    gemini:     { baseUrl: 'https://generativelanguage.googleapis.com/v1beta/openai',  apiKey: '', modelFast: 'gemini-2.0-flash',        modelPowerful: 'gemini-2.5-pro-exp-03-25' },
-    openrouter: { baseUrl: 'https://openrouter.ai/api/v1',                            apiKey: '', modelFast: 'google/gemini-flash-1.5',  modelPowerful: 'anthropic/claude-3.5-sonnet' },
-    ollama:     { baseUrl: 'http://localhost:11434/v1',                                apiKey: '', modelFast: 'llama3.2',                modelPowerful: '' },
-    custom:     { baseUrl: '',                                                          apiKey: '', modelFast: '',                        modelPowerful: '' },
+    openai:     { baseUrl: 'https://api.openai.com/v1',                               apiKey: '', modelFast: 'gpt-5.4-mini',                    modelPowerful: '' },
+    gemini:     { baseUrl: 'https://generativelanguage.googleapis.com/v1beta/openai',  apiKey: '', modelFast: 'gemini-3-flash-preview',           modelPowerful: '' },
+    openrouter: { baseUrl: 'https://openrouter.ai/api/v1',                            apiKey: '', modelFast: 'google/gemini-3-flash-preview',     modelPowerful: '' },
+    ollama:     { baseUrl: 'http://localhost:11434/v1',                                apiKey: '', modelFast: 'gemma4:latest',                    modelPowerful: '' },
+    custom:     { baseUrl: '',                                                          apiKey: '', modelFast: '',                                 modelPowerful: '' },
 };
 
 // ===== 預設值 =====
@@ -31,7 +31,7 @@ export const DEFAULT_SETTINGS: VLLSettings = {
     providerProfiles:       {},
     llmBaseUrl:             'https://api.openai.com/v1',
     llmApiKey:              '',
-    llmModelFast:           'gpt-4o-mini',
+    llmModelFast:           'gpt-5.4-mini',
     llmModelPowerful:       '',
     annotationLanguage:     'ja',
     annotationSystemPrompt: '',

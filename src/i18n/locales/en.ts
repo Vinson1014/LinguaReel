@@ -17,7 +17,7 @@ const en = {
 
     // ── 設定頁 ─────────────────────────────────────
     settings: {
-        title: 'VLL Settings',
+        title: 'LinguaReel Settings',
         general: {
             title:              'General',
             language:           'Interface Language',
@@ -227,7 +227,7 @@ const en = {
 
     // ── 首頁 / Dashboard ───────────────────────────
     home: {
-        viewTitle: 'VLL',
+        viewTitle: 'LinguaReel',
         statusLlmOk:      'LLM ready',
         statusLlmFail:    '⚠ LLM not configured',
         configure:        'Configure',

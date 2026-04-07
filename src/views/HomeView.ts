@@ -62,7 +62,7 @@ export class HomeView extends ItemView {
 
     private renderHeader(el: HTMLElement): void {
         const header = el.createDiv({ cls: 'vll-home-header' });
-        header.createEl('span', { text: 'VLL', cls: 'vll-home-logo' });
+        header.createEl('span', { text: 'LinguaReel', cls: 'vll-home-logo' });
         header.createEl('span', { text: 'Video Language Learning', cls: 'vll-home-subtitle' });
     }
 

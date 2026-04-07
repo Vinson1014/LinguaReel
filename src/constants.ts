@@ -17,8 +17,8 @@ export const STORE_HIGHLIGHTS = 'highlights';
 
 // ===== 插件基本資訊 =====
 
-export const PLUGIN_ID   = 'vll';
-export const PLUGIN_NAME = 'VLL - Video Language Learning';
+export const PLUGIN_ID   = 'lingua-reel';
+export const PLUGIN_NAME = 'LinguaReel';
 
 // ===== 事件名稱 =====
 
@@ -34,4 +34,4 @@ export const EVENT_ANNOTATION_JOB = 'vll:annotation-job-update';
 // ===== 語言包 =====
 
 /** Vault 內語言包 .md 檔的存放資料夾（使用者可直接編輯） */
-export const LANGUAGE_PACK_FOLDER = 'VLL/language-packs';
+export const LANGUAGE_PACK_FOLDER = 'LinguaReel/language-packs';

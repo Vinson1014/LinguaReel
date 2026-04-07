@@ -16,7 +16,7 @@ const zhTW: Translations = {
     },
 
     settings: {
-        title: 'VLL 設定',
+        title: 'LinguaReel 設定',
         general: {
             title:              '一般',
             language:           '介面語言',
@@ -219,7 +219,7 @@ const zhTW: Translations = {
     },
 
     home: {
-        viewTitle: 'VLL',
+        viewTitle: 'LinguaReel',
         statusLlmOk:      'LLM 已設定',
         statusLlmFail:    '⚠ LLM 尚未設定',
         configure:        '前往設定',

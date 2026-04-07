@@ -1,7 +1,7 @@
 {
-	"name": "obsidian-sample-plugin",
-	"version": "1.0.0",
-	"description": "This is a sample plugin for Obsidian (https://obsidian.md)",
+	"name": "lingua-reel",
+	"version": "0.1.0",
+	"description": "AI-powered language learning plugin for Obsidian — video shadowing, LLM dictionary, FSRS flashcards, and AI annotation pipeline.",
 	"main": "main.js",
 	"type": "module",
 	"scripts": {
