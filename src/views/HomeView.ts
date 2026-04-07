@@ -1,17 +1,15 @@
-import { ItemView, TFile, WorkspaceLeaf } from 'obsidian';
+import { ItemView, TFile, WorkspaceLeaf, setIcon } from 'obsidian';
 import { VIEW_TYPE_HOME, VIEW_TYPE_DICT, VIEW_TYPE_HIGHLIGHT, VIEW_TYPE_FLASHCARD, VIEW_TYPE_SHADOWING, EVENT_ANNOTATION_JOB } from '../constants';
 import { t } from '../i18n';
 import type VLLPlugin from '../main';
 import type { AnnotationJob } from '../types';
 
 /**
- * VLL 首頁 / Dashboard
+ * VLL 首頁 — 垂直學習管線（Pipeline）
  *
- * 唯一的 Ribbon 入口。顯示：
- * - LLM 設定狀態
- * - 生詞本數量 / 今日待複習卡片數
- * - 四大模組導航卡片
- * - 快速匯入影片按鈕
+ * 以由上到下的流程暗示學習步驟：
+ * ① 匯入影片 → ② AI 標註 → ③ 跟讀工坊 → ④ 重點筆記 → ⑤ FSRS 閃卡
+ * 底部常駐字典入口
  */
 export class HomeView extends ItemView {
 
@@ -29,7 +27,6 @@ export class HomeView extends ItemView {
 
     async onOpen(): Promise<void> {
         await this.render();
-        // 訂閱背景標注任務更新 — ItemView.registerEvent 會在關閉時自動取消訂閱
         this.registerEvent(
             // @ts-ignore — custom workspace event
             this.app.workspace.on(EVENT_ANNOTATION_JOB, () => this.refreshJobs())
@@ -38,147 +35,213 @@ export class HomeView extends ItemView {
 
     async onClose(): Promise<void> { this.contentEl.empty(); }
 
-    // ─── 渲染 ──────────────────────────────────────────────────────────────
+    // ─── 主渲染 ─────────────────────────────────────────────────────────────
 
     async render(): Promise<void> {
         const { contentEl } = this;
         contentEl.empty();
         contentEl.addClass('vll-home-view');
 
-        this.renderHeader(contentEl);
-        this.renderStatus(contentEl);
-        this.renderModuleGrid(contentEl);
-        this.renderQuickActions(contentEl);
+        this.renderHero(contentEl);
+        this.renderStatsBar(contentEl);
+        this.renderPipeline(contentEl);
 
-        // 標注任務進度區（局部刷新，不重繪整頁）
+        // 標注任務進度區（局部刷新）
         this.jobsEl = contentEl.createDiv({ cls: 'vll-home-jobs' });
         this.refreshJobs();
+
+        this.renderDictBar(contentEl);
 
         // 非同步載入統計數字
         this.loadStats(contentEl);
     }
 
-    // ─── Header ────────────────────────────────────────────────────────────
+    // ─── Hero ───────────────────────────────────────────────────────────────
 
-    private renderHeader(el: HTMLElement): void {
-        const header = el.createDiv({ cls: 'vll-home-header' });
-        header.createEl('span', { text: 'LinguaReel', cls: 'vll-home-logo' });
-        header.createEl('span', { text: 'Video Language Learning', cls: 'vll-home-subtitle' });
-    }
+    private renderHero(el: HTMLElement): void {
+        const hero = el.createDiv({ cls: 'vll-home-hero' });
 
-    // ─── 狀態列 ────────────────────────────────────────────────────────────
+        const titleRow = hero.createDiv({ cls: 'vll-home-hero-title-row' });
+        titleRow.createEl('span', { text: 'LinguaReel', cls: 'vll-home-logo' });
 
-    private renderStatus(el: HTMLElement): void {
-        const bar = el.createDiv({ cls: 'vll-home-status-bar', attr: { id: 'vll-status-bar' } });
-
-        // LLM 狀態
+        // LLM status chip inline with logo
         const llmOk = this.plugin.llm.isConfigured();
-        const llmChip = bar.createDiv({
+        const chip = titleRow.createDiv({
             cls: `vll-status-chip ${llmOk ? 'vll-chip-ok' : 'vll-chip-warn'}`,
         });
-        llmChip.createEl('span', { text: llmOk ? t('home.statusLlmOk') : t('home.statusLlmFail') });
+        const dot = chip.createEl('span', { cls: 'vll-status-dot' });
+        dot.addClass(llmOk ? 'vll-dot-ok' : 'vll-dot-warn');
+        chip.createEl('span', { text: llmOk ? t('home.statusLlmOk') : t('home.statusLlmFail') });
         if (!llmOk) {
-            const link = llmChip.createEl('button', { text: t('home.configure'), cls: 'vll-chip-link' });
+            const link = chip.createEl('button', { text: t('home.configure'), cls: 'vll-chip-link' });
             link.addEventListener('click', () => {
-                // @ts-ignore — Obsidian 內部 API 開啟設定頁
+                // @ts-ignore — Obsidian 內部 API
                 (this.plugin.app as any).setting?.open?.();
                 (this.plugin.app as any).setting?.openTabById?.('vll');
             });
         }
 
-        // 生詞本 / 待複習（初始佔位）
-        bar.createDiv({ cls: 'vll-status-chip vll-chip-neutral', attr: { id: 'vll-stat-vocab' } })
-            .setText('...');
-        bar.createDiv({ cls: 'vll-status-chip vll-chip-neutral', attr: { id: 'vll-stat-due' } })
-            .setText('...');
+        hero.createEl('p', { text: t('home.tagline' as any), cls: 'vll-home-tagline' });
+    }
+
+    // ─── Stats Bar ──────────────────────────────────────────────────────────
+
+    private renderStatsBar(el: HTMLElement): void {
+        const bar = el.createDiv({ cls: 'vll-home-stats-bar' });
+
+        // vocab stat
+        const vocabStat = bar.createDiv({ cls: 'vll-stat-box', attr: { id: 'vll-stat-vocab-box' } });
+        const vocabIcon = vocabStat.createDiv({ cls: 'vll-stat-icon' });
+        setIcon(vocabIcon, 'book-open');
+        vocabStat.createEl('span', { text: '...', cls: 'vll-stat-value', attr: { id: 'vll-stat-vocab-val' } });
+        vocabStat.createEl('span', { text: t('home.statsVocab' as any), cls: 'vll-stat-label' });
+
+        // due stat
+        const dueStat = bar.createDiv({ cls: 'vll-stat-box', attr: { id: 'vll-stat-due-box' } });
+        const dueIcon = dueStat.createDiv({ cls: 'vll-stat-icon' });
+        setIcon(dueIcon, 'brain');
+        dueStat.createEl('span', { text: '...', cls: 'vll-stat-value', attr: { id: 'vll-stat-due-val' } });
+        dueStat.createEl('span', { text: t('home.statsDue' as any), cls: 'vll-stat-label' });
+
+        // LLM chip (compact)
+        const llmStat = bar.createDiv({ cls: 'vll-stat-box', attr: { id: 'vll-stat-llm-box' } });
+        const llmIcon = llmStat.createDiv({ cls: 'vll-stat-icon' });
+        setIcon(llmIcon, 'zap');
+        const llmOk = this.plugin.llm.isConfigured();
+        llmStat.createEl('span', {
+            text: llmOk ? t('home.statusLlmOk') : t('home.statusLlmFail'),
+            cls: `vll-stat-value ${llmOk ? '' : 'vll-stat-warn'}`,
+            attr: { id: 'vll-stat-llm-val' },
+        });
+        llmStat.createEl('span', { text: 'LLM', cls: 'vll-stat-label' });
     }
 
     private async loadStats(el: HTMLElement): Promise<void> {
         try {
-            const stats   = await this.plugin.vocabStorage.getStats();
-            const vocabEl = el.querySelector('#vll-stat-vocab') as HTMLElement | null;
-            const dueEl   = el.querySelector('#vll-stat-due')   as HTMLElement | null;
+            const stats = await this.plugin.vocabStorage.getStats();
+            const vocabVal = el.querySelector('#vll-stat-vocab-val') as HTMLElement | null;
+            const dueVal = el.querySelector('#vll-stat-due-val') as HTMLElement | null;
 
-            vocabEl?.setText(t('home.vocabCount', { count: stats.new + stats.learning + stats.review }));
-            dueEl?.setText(
-                stats.due > 0
-                    ? t('home.dueCount', { count: stats.due })
-                    : t('home.noDue')
-            );
-            if (stats.due > 0) dueEl?.addClass('vll-chip-warn');
+            const total = stats.new + stats.learning + stats.review;
+            vocabVal?.setText(String(total));
+
+            if (stats.due > 0) {
+                dueVal?.setText(String(stats.due));
+                dueVal?.addClass('vll-stat-accent');
+            } else {
+                dueVal?.setText(t('home.noDue'));
+            }
         } catch {
-            // 資料庫尚未就緒，靜默失敗
+            // DB not ready
         }
     }
 
-    // ─── 模組卡片 2×2 ──────────────────────────────────────────────────────
+    // ─── Pipeline 步驟 ──────────────────────────────────────────────────────
 
-    private renderModuleGrid(el: HTMLElement): void {
-        const grid = el.createDiv({ cls: 'vll-home-grid' });
+    private renderPipeline(el: HTMLElement): void {
+        const pipeline = el.createDiv({ cls: 'vll-pipeline' });
 
-        const modules: Array<{
+        const steps: Array<{
+            num: number;
             icon: string;
             titleKey: string;
             descKey: string;
-            viewType: string;
-            badgeId?: string;
+            action: () => void;
+            actionLabel: string;
+            accent: string;       // CSS accent color class
+            isAction?: boolean;   // true = primary CTA button (import/annotate)
         }> = [
-            { icon: 'book-open',   titleKey: 'dict.viewTitle',      descKey: 'home.descDict',      viewType: VIEW_TYPE_DICT },
-            { icon: 'highlighter', titleKey: 'highlight.viewTitle', descKey: 'home.descHighlight', viewType: VIEW_TYPE_HIGHLIGHT },
-            { icon: 'brain',       titleKey: 'flashcard.viewTitle', descKey: 'home.descFlashcard', viewType: VIEW_TYPE_FLASHCARD, badgeId: 'vll-badge-due' },
-            { icon: 'film',        titleKey: 'shadowing.viewTitle', descKey: 'home.descShadowing', viewType: VIEW_TYPE_SHADOWING },
+            {
+                num: 1, icon: 'download', accent: 'vll-step-blue',
+                titleKey: 'home.stepImport', descKey: 'home.stepImportDesc',
+                action: () => this.plugin.openImportModal(),
+                actionLabel: t('home.importVideo'),
+                isAction: true,
+            },
+            {
+                num: 2, icon: 'sparkles', accent: 'vll-step-green',
+                titleKey: 'home.stepAnnotate', descKey: 'home.stepAnnotateDesc',
+                action: () => this.plugin.openAnnotateModal(),
+                actionLabel: t('home.annotateNote'),
+                isAction: true,
+            },
+            {
+                num: 3, icon: 'film', accent: 'vll-step-purple',
+                titleKey: 'home.stepShadow', descKey: 'home.stepShadowDesc',
+                action: () => this.plugin.openView(VIEW_TYPE_SHADOWING),
+                actionLabel: t('home.open'),
+            },
+            {
+                num: 4, icon: 'highlighter', accent: 'vll-step-orange',
+                titleKey: 'home.stepHighlight', descKey: 'home.stepHighlightDesc',
+                action: () => this.plugin.openView(VIEW_TYPE_HIGHLIGHT),
+                actionLabel: t('home.open'),
+            },
+            {
+                num: 5, icon: 'brain', accent: 'vll-step-pink',
+                titleKey: 'home.stepFlashcard', descKey: 'home.stepFlashcardDesc',
+                action: () => this.plugin.openView(VIEW_TYPE_FLASHCARD),
+                actionLabel: t('home.open'),
+            },
         ];
 
-        for (const mod of modules) {
-            this.renderModuleCard(grid, mod);
-        }
+        steps.forEach((step, i) => {
+            this.renderStep(pipeline, step, i === steps.length - 1);
+        });
     }
 
-    private renderModuleCard(
+    private renderStep(
         container: HTMLElement,
-        mod: { icon: string; titleKey: string; descKey: string; viewType: string; badgeId?: string },
+        step: {
+            num: number; icon: string; accent: string;
+            titleKey: string; descKey: string;
+            action: () => void; actionLabel: string;
+            isAction?: boolean;
+        },
+        isLast: boolean,
     ): void {
-        const card = container.createDiv({ cls: 'vll-home-card' });
+        const row = container.createDiv({ cls: 'vll-step-row' });
 
-        // 圖示
-        const iconWrap = card.createDiv({ cls: 'vll-home-card-icon' });
-        // Obsidian setIcon helper
-        (this.plugin.app as any).vault; // 確保 app 就緒
-        try {
-            const { setIcon } = require('obsidian') as typeof import('obsidian');
-            setIcon(iconWrap, mod.icon);
-        } catch { iconWrap.setText(mod.icon); }
+        // ─ 左側時間軸：圓圈 + 連線
+        const timeline = row.createDiv({ cls: 'vll-step-timeline' });
+        const circle = timeline.createDiv({ cls: `vll-step-circle ${step.accent}` });
+        circle.createEl('span', { text: String(step.num), cls: 'vll-step-num' });
+        if (!isLast) {
+            timeline.createDiv({ cls: 'vll-step-line' });
+        }
 
-        // 文字
-        const body = card.createDiv({ cls: 'vll-home-card-body' });
-        body.createEl('span', { text: t(mod.titleKey as any), cls: 'vll-home-card-title' });
-        body.createEl('span', { text: t(mod.descKey  as any), cls: 'vll-home-card-desc' });
+        // ─ 右側卡片
+        const card = row.createDiv({ cls: `vll-step-card ${step.accent}` });
 
-        // 開啟按鈕
-        const btn = card.createEl('button', { text: t('home.open'), cls: 'vll-btn vll-btn-primary vll-home-card-btn' });
-        btn.addEventListener('click', () => this.plugin.openView(mod.viewType));
+        const cardHeader = card.createDiv({ cls: 'vll-step-card-header' });
+        const iconWrap = cardHeader.createDiv({ cls: 'vll-step-card-icon' });
+        setIcon(iconWrap, step.icon);
+        cardHeader.createEl('span', { text: t(step.titleKey as any), cls: 'vll-step-card-title' });
 
-        card.addEventListener('click', (e) => {
-            if (e.target !== btn) this.plugin.openView(mod.viewType);
+        card.createEl('p', { text: t(step.descKey as any), cls: 'vll-step-card-desc' });
+
+        const btn = card.createEl('button', {
+            text: step.actionLabel,
+            cls: step.isAction
+                ? 'vll-btn vll-btn-primary vll-step-btn'
+                : 'vll-btn vll-step-btn-outline',
         });
+        btn.addEventListener('click', (e) => { e.stopPropagation(); step.action(); });
+        card.addEventListener('click', () => step.action());
     }
 
-    // ─── 快速動作 ───────────────────────────────────────────────────────────
+    // ─── 字典常駐入口 ───────────────────────────────────────────────────────
 
-    private renderQuickActions(el: HTMLElement): void {
-        const row = el.createDiv({ cls: 'vll-home-quick-actions' });
+    private renderDictBar(el: HTMLElement): void {
+        const bar = el.createDiv({ cls: 'vll-home-dict-bar' });
+        const iconWrap = bar.createDiv({ cls: 'vll-home-dict-icon' });
+        setIcon(iconWrap, 'search');
 
-        const importBtn = row.createEl('button', {
-            text: t('home.importVideo'),
-            cls:  'vll-btn vll-home-import-btn',
-        });
-        importBtn.addEventListener('click', () => this.plugin.openImportModal());
+        const text = bar.createDiv({ cls: 'vll-home-dict-text' });
+        text.createEl('span', { text: t('home.dictEntry' as any), cls: 'vll-home-dict-title' });
+        text.createEl('span', { text: t('home.dictEntryDesc' as any), cls: 'vll-home-dict-desc' });
 
-        const annotateBtn = row.createEl('button', {
-            text: t('home.annotateNote'),
-            cls:  'vll-btn vll-home-annotate-btn',
-        });
-        annotateBtn.addEventListener('click', () => this.plugin.openAnnotateModal());
+        bar.addEventListener('click', () => this.plugin.openView(VIEW_TYPE_DICT));
     }
 
     // ─── 標注任務進度（局部刷新）────────────────────────────────────────────
@@ -190,7 +253,7 @@ export class HomeView extends ItemView {
 
         this.jobsEl.createEl('h4', {
             text: t('home.jobs.title'),
-            cls:  'vll-home-section-title',
+            cls: 'vll-home-section-title',
         });
 
         for (const job of jobs) {
@@ -201,7 +264,6 @@ export class HomeView extends ItemView {
     private renderJobCard(container: HTMLElement, job: AnnotationJob): void {
         const card = container.createDiv({ cls: `vll-job-card vll-job-${job.status}` });
 
-        // 標頭：圖示 + 檔名
         const icon: Record<AnnotationJob['status'], string> = {
             running:   '⏳',
             done:      '✅',
@@ -211,24 +273,21 @@ export class HomeView extends ItemView {
         card.createDiv({ cls: 'vll-job-header' })
             .createEl('span', { text: `${icon[job.status]} ${job.fileName}`, cls: 'vll-job-filename' });
 
-        // 進度條（僅 running 且 total 已知）
         if (job.status === 'running' && job.total > 0) {
-            const pct  = Math.round((job.done / job.total) * 100);
+            const pct = Math.round((job.done / job.total) * 100);
             const prog = card.createDiv({ cls: 'vll-job-progress' });
-            const bar  = prog.createDiv({ cls: 'vll-job-bar' });
+            const bar = prog.createDiv({ cls: 'vll-job-bar' });
             bar.createDiv({ cls: 'vll-job-fill', attr: { style: `width: ${pct}%` } });
             prog.createEl('span', { text: `${job.done} / ${job.total}`, cls: 'vll-job-count' });
         }
 
-        // Streaming 預覽（LLM 即時輸出）
         if (job.status === 'running' && job.currentSubtitle) {
             const preview = card.createDiv({ cls: 'vll-job-stream-preview' });
             preview.createEl('span', {
                 text: `▸ ${job.currentSubtitle}`,
-                cls:  'vll-job-stream-input',
+                cls: 'vll-job-stream-input',
             });
             if (job.currentOutput) {
-                // 只顯示最後 120 字元，避免卡片過長
                 const tail = job.currentOutput.length > 120
                     ? '…' + job.currentOutput.slice(-120)
                     : job.currentOutput;
@@ -236,12 +295,10 @@ export class HomeView extends ItemView {
             }
         }
 
-        // 錯誤訊息
         if (job.status === 'failed' && job.error) {
             card.createEl('p', { text: job.error, cls: 'vll-job-error' });
         }
 
-        // 操作按鈕
         const actions = card.createDiv({ cls: 'vll-job-actions' });
 
         if (job.status === 'running') {
@@ -251,8 +308,8 @@ export class HomeView extends ItemView {
 
         if (job.status === 'done' && job.resultPath) {
             const openBtn = actions.createEl('button', {
-                text: t('shadowing.openAnnotated'),
-                cls:  'vll-btn vll-btn-primary',
+                text: t('home.open'),
+                cls: 'vll-btn vll-btn-primary',
             });
             openBtn.addEventListener('click', async () => {
                 const f = this.app.vault.getAbstractFileByPath(job.resultPath!);
@@ -263,12 +320,11 @@ export class HomeView extends ItemView {
             });
         }
 
-        // 已完成 / 失敗 / 取消 → 顯示關閉按鈕
         if (job.status !== 'running') {
             const dismissBtn = actions.createEl('button', {
-                text:  '×',
-                cls:   'vll-btn vll-job-dismiss',
-                attr:  { title: t('home.jobs.dismiss') },
+                text: '×',
+                cls: 'vll-btn vll-job-dismiss',
+                attr: { title: t('home.jobs.dismiss') },
             });
             dismissBtn.addEventListener('click', () => {
                 this.plugin.annotationJobs = this.plugin.annotationJobs.filter(j => j.id !== job.id);

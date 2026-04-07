@@ -263,57 +263,84 @@
     border-radius: 4px;
 }
 
-/* ── 首頁 / Dashboard ──────────────────────────────────────── */
+/* ── 首頁 / Dashboard — Pipeline ──────────────────────────── */
+
+/* Step accent colors */
+.theme-dark {
+    --vll-step-blue:   #60a5fa;
+    --vll-step-green:  #4ade80;
+    --vll-step-purple: #c084fc;
+    --vll-step-orange: #fb923c;
+    --vll-step-pink:   #f472b6;
+}
+.theme-light {
+    --vll-step-blue:   #3b82f6;
+    --vll-step-green:  #22c55e;
+    --vll-step-purple: #7c3aed;
+    --vll-step-orange: #ea580c;
+    --vll-step-pink:   #db2777;
+}
 
 .vll-home-view {
     display: flex;
     flex-direction: column;
-    gap: 16px;
-    padding: 16px 12px;
+    gap: 0;
+    padding: 20px 16px 16px;
     overflow-y: auto;
     height: 100%;
 }
 
-.vll-home-header {
+/* ── Hero ─────────────────────────────────────────── */
+
+.vll-home-hero {
+    text-align: center;
+    padding: 8px 0 4px;
+}
+
+.vll-home-hero-title-row {
     display: flex;
-    flex-direction: column;
-    gap: 2px;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    flex-wrap: wrap;
 }
 
 .vll-home-logo {
-    font-size: 1.6em;
-    font-weight: 700;
+    font-size: 1.5em;
+    font-weight: 800;
     color: var(--vll-accent);
-    letter-spacing: 0.05em;
+    letter-spacing: 0.04em;
 }
 
-.vll-home-subtitle {
-    font-size: 0.78em;
+.vll-home-tagline {
+    font-size: 0.8em;
     color: var(--text-muted);
-    letter-spacing: 0.03em;
+    margin: 4px 0 0;
+    letter-spacing: 0.01em;
 }
 
-/* 狀態列 */
-.vll-home-status-bar {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 6px;
-}
-
+/* LLM status chip (inline with logo) */
 .vll-status-chip {
     display: inline-flex;
     align-items: center;
     gap: 5px;
-    padding: 3px 10px;
+    padding: 2px 10px;
     border-radius: 999px;
-    font-size: 0.78em;
+    font-size: 0.72em;
     font-weight: 500;
     white-space: nowrap;
 }
 
-.vll-chip-ok      { background: var(--color-green); color: #fff; }
-.vll-chip-warn    { background: var(--color-orange, #f59e0b); color: #fff; }
-.vll-chip-neutral { background: var(--background-modifier-border); color: var(--text-muted); }
+.vll-chip-ok   { background: color-mix(in srgb, var(--color-green) 18%, transparent); color: var(--color-green); }
+.vll-chip-warn { background: color-mix(in srgb, var(--color-orange, #f59e0b) 18%, transparent); color: var(--color-orange, #f59e0b); }
+
+.vll-status-dot {
+    width: 6px; height: 6px;
+    border-radius: 50%;
+    display: inline-block;
+}
+.vll-dot-ok   { background: var(--color-green); }
+.vll-dot-warn { background: var(--color-orange, #f59e0b); }
 
 .vll-chip-link {
     background: transparent;
@@ -325,117 +352,235 @@
     padding: 0;
 }
 
-/* 模組卡片 2×2 格線 */
-.vll-home-grid {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: 10px;
+/* ── Stats Bar ────────────────────────────────────── */
+
+.vll-home-stats-bar {
+    display: flex;
+    justify-content: center;
+    gap: 6px;
+    margin: 14px 0 18px;
 }
 
-.vll-home-card {
+.vll-stat-box {
     display: flex;
     flex-direction: column;
-    align-items: flex-start;
-    gap: 6px;
-    padding: 12px 10px;
+    align-items: center;
+    gap: 2px;
+    flex: 1;
+    max-width: 120px;
+    padding: 10px 6px 8px;
+    background: var(--vll-card-bg);
+    border: 1px solid var(--vll-card-border);
+    border-radius: 10px;
+}
+
+.vll-stat-icon {
+    width: 18px; height: 18px;
+    color: var(--text-muted);
+    display: flex; align-items: center; justify-content: center;
+}
+.vll-stat-icon svg { width: 16px; height: 16px; }
+
+.vll-stat-value {
+    font-size: 1.15em;
+    font-weight: 700;
+    color: var(--text-normal);
+    line-height: 1.2;
+}
+.vll-stat-value.vll-stat-accent { color: var(--vll-accent); }
+.vll-stat-value.vll-stat-warn  { color: var(--color-orange, #f59e0b); font-size: 0.72em; font-weight: 500; }
+
+.vll-stat-label {
+    font-size: 0.68em;
+    color: var(--text-muted);
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+}
+
+/* ── Pipeline ─────────────────────────────────────── */
+
+.vll-pipeline {
+    display: flex;
+    flex-direction: column;
+    padding: 0 0 0 6px;
+}
+
+/* Each step row: timeline column + card */
+.vll-step-row {
+    display: flex;
+    gap: 14px;
+    align-items: stretch;
+    min-height: 0;
+}
+
+/* Timeline — circle + vertical line */
+.vll-step-timeline {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    width: 28px;
+    flex-shrink: 0;
+}
+
+.vll-step-circle {
+    width: 28px; height: 28px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    position: relative;
+    z-index: 1;
+}
+.vll-step-circle.vll-step-blue   { background: color-mix(in srgb, var(--vll-step-blue) 18%, transparent); }
+.vll-step-circle.vll-step-green  { background: color-mix(in srgb, var(--vll-step-green) 18%, transparent); }
+.vll-step-circle.vll-step-purple { background: color-mix(in srgb, var(--vll-step-purple) 18%, transparent); }
+.vll-step-circle.vll-step-orange { background: color-mix(in srgb, var(--vll-step-orange) 18%, transparent); }
+.vll-step-circle.vll-step-pink   { background: color-mix(in srgb, var(--vll-step-pink) 18%, transparent); }
+
+.vll-step-num {
+    font-size: 0.72em;
+    font-weight: 700;
+    line-height: 1;
+}
+.vll-step-blue   .vll-step-num { color: var(--vll-step-blue); }
+.vll-step-green  .vll-step-num { color: var(--vll-step-green); }
+.vll-step-purple .vll-step-num { color: var(--vll-step-purple); }
+.vll-step-orange .vll-step-num { color: var(--vll-step-orange); }
+.vll-step-pink   .vll-step-num { color: var(--vll-step-pink); }
+
+.vll-step-line {
+    width: 2px;
+    flex: 1;
+    min-height: 8px;
+    background: var(--background-modifier-border);
+    border-radius: 1px;
+}
+
+/* Step card */
+.vll-step-card {
+    flex: 1;
+    padding: 12px 14px;
+    margin-bottom: 8px;
     background: var(--vll-card-bg);
     border: 1px solid var(--vll-card-border);
     border-radius: 10px;
     cursor: pointer;
-    transition: border-color 0.18s, box-shadow 0.18s, transform 0.18s;
+    transition: border-color 0.18s, box-shadow 0.18s, transform 0.15s;
 }
 
-.vll-home-card:hover {
-    border-color: var(--vll-accent);
-    box-shadow: 0 6px 20px rgba(0,0,0,0.10);
-    transform: translateY(-2px);
+.vll-step-card:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 4px 16px rgba(0,0,0,0.08);
 }
-.theme-dark .vll-home-card:hover {
-    box-shadow: 0 6px 20px rgba(0,0,0,0.30);
+.theme-dark .vll-step-card:hover {
+    box-shadow: 0 4px 16px rgba(0,0,0,0.25);
 }
 
-.vll-home-card-icon {
-    width: 28px;
-    height: 28px;
+/* Hover border accent per step */
+.vll-step-card.vll-step-blue:hover   { border-color: var(--vll-step-blue); }
+.vll-step-card.vll-step-green:hover  { border-color: var(--vll-step-green); }
+.vll-step-card.vll-step-purple:hover { border-color: var(--vll-step-purple); }
+.vll-step-card.vll-step-orange:hover { border-color: var(--vll-step-orange); }
+.vll-step-card.vll-step-pink:hover   { border-color: var(--vll-step-pink); }
+
+.vll-step-card-header {
     display: flex;
     align-items: center;
-    justify-content: center;
-    color: var(--vll-accent);
+    gap: 8px;
+    margin-bottom: 4px;
 }
 
-.vll-home-card-icon svg {
-    width: 20px;
-    height: 20px;
+.vll-step-card-icon {
+    width: 18px; height: 18px;
+    display: flex; align-items: center; justify-content: center;
+    flex-shrink: 0;
 }
+.vll-step-card-icon svg { width: 16px; height: 16px; }
 
-.vll-home-card-body {
-    display: flex;
-    flex-direction: column;
-    gap: 2px;
-    flex: 1;
-    width: 100%;
-}
+.vll-step-blue   .vll-step-card-icon { color: var(--vll-step-blue); }
+.vll-step-green  .vll-step-card-icon { color: var(--vll-step-green); }
+.vll-step-purple .vll-step-card-icon { color: var(--vll-step-purple); }
+.vll-step-orange .vll-step-card-icon { color: var(--vll-step-orange); }
+.vll-step-pink   .vll-step-card-icon { color: var(--vll-step-pink); }
 
-.vll-home-card-title {
-    font-size: 0.9em;
+.vll-step-card-title {
+    font-size: 0.88em;
     font-weight: 600;
     color: var(--text-normal);
 }
 
-.vll-home-card-desc {
+.vll-step-card-desc {
     font-size: 0.74em;
     color: var(--text-muted);
-    line-height: 1.4;
+    line-height: 1.45;
+    margin: 0 0 8px;
 }
 
-.vll-home-card-btn {
-    margin-top: 4px;
-    font-size: 0.78em;
-    padding: 3px 10px;
-    align-self: flex-end;
-}
-
-/* 快速動作列 */
-.vll-home-quick-actions {
-    display: flex;
-    gap: 8px;
-    flex-wrap: wrap;
-}
-
-.vll-home-import-btn {
-    display: flex;
-    align-items: center;
-    gap: 6px;
-    font-size: 0.85em;
-    padding: 6px 14px;
+/* Step action buttons */
+.vll-step-btn {
+    font-size: 0.76em;
+    padding: 4px 14px;
     border-radius: 6px;
-    border: 1px dashed var(--vll-accent);
+}
+
+.vll-step-btn-outline {
+    font-size: 0.76em;
+    padding: 4px 14px;
+    border-radius: 6px;
     background: transparent;
+    border: 1px solid var(--background-modifier-border);
+    color: var(--text-muted);
+    cursor: pointer;
+    transition: border-color 0.15s, color 0.15s;
+}
+.vll-step-btn-outline:hover {
+    border-color: var(--vll-accent);
     color: var(--vll-accent);
-    cursor: pointer;
-    transition: background 0.15s;
 }
 
-.vll-home-import-btn:hover {
-    background: color-mix(in srgb, var(--vll-accent) 10%, transparent);
-}
+/* ── Dictionary floating bar ──────────────────────── */
 
-.vll-home-annotate-btn {
+.vll-home-dict-bar {
     display: flex;
     align-items: center;
-    gap: 6px;
-    font-size: 0.85em;
-    padding: 6px 14px;
-    border-radius: 6px;
-    border: 1px dashed var(--color-green);
-    background: transparent;
-    color: var(--color-green);
+    gap: 10px;
+    margin-top: 10px;
+    padding: 10px 14px;
+    background: var(--vll-card-bg);
+    border: 1px dashed var(--vll-accent);
+    border-radius: 10px;
     cursor: pointer;
-    transition: background 0.15s;
+    transition: background 0.18s, border-color 0.18s;
+}
+.vll-home-dict-bar:hover {
+    background: color-mix(in srgb, var(--vll-accent) 8%, transparent);
+    border-style: solid;
 }
 
-.vll-home-annotate-btn:hover {
-    background: color-mix(in srgb, var(--color-green) 10%, transparent);
+.vll-home-dict-icon {
+    width: 22px; height: 22px;
+    display: flex; align-items: center; justify-content: center;
+    color: var(--vll-accent);
+    flex-shrink: 0;
+}
+.vll-home-dict-icon svg { width: 18px; height: 18px; }
+
+.vll-home-dict-text {
+    display: flex;
+    flex-direction: column;
+    gap: 1px;
+}
+
+.vll-home-dict-title {
+    font-size: 0.85em;
+    font-weight: 600;
+    color: var(--vll-accent);
+}
+
+.vll-home-dict-desc {
+    font-size: 0.72em;
+    color: var(--text-muted);
 }
 
 /* ── 查詞 View ─────────────────────────────────────────────── */

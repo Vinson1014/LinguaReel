@@ -228,20 +228,38 @@ const en = {
     // ── 首頁 / Dashboard ───────────────────────────
     home: {
         viewTitle: 'LinguaReel',
+        tagline:          'Immersive language learning, one video at a time',
         statusLlmOk:      'LLM ready',
-        statusLlmFail:    '⚠ LLM not configured',
+        statusLlmFail:    'LLM not configured',
         configure:        'Configure',
-        vocabCount:       '{count} words in vocabulary',
-        dueCount:         '{count} cards due today',
+        vocabCount:       '{count} words',
+        dueCount:         '{count} due',
         noDue:            'All caught up!',
-        descDict:         'Look up words, build vocabulary',
-        descHighlight:    'Manage highlighted notes with AI',
-        descFlashcard:    'FSRS spaced repetition review',
-        descShadowing:    'Video shadowing & annotation',
+        // pipeline steps
+        stepImport:       'Import Video',
+        stepImportDesc:   'Bring in a YouTube link or local video file',
+        stepAnnotate:     'AI Annotation',
+        stepAnnotateDesc: 'Generate translations & grammar notes for subtitles',
+        stepShadow:       'Shadowing Workshop',
+        stepShadowDesc:   'Watch, listen, repeat — look up words as you go',
+        stepHighlight:    'Highlight Notes',
+        stepHighlightDesc:'Mark difficult passages, get AI translation & analysis',
+        stepFlashcard:    'Flashcard Review',
+        stepFlashcardDesc:'Reinforce vocabulary with FSRS spaced repetition',
+        // dict floating bar
+        dictEntry:        'Dictionary',
+        dictEntryDesc:    'Look up any word, anytime',
+        // actions
         open:             'Open',
         importVideo:      'Import Video',
-        annotateNote:     'Generate Study Material',
+        annotateNote:     'Annotate',
         noActiveFile:     'No active file. Please open a shadowing note first.',
+        // stats
+        statsVocab:       'Vocabulary',
+        statsDue:         'Due Today',
+        statsStreak:      'Streak',
+        statsDays:        '{count}d',
+        // jobs
         jobs: {
             title:   'Annotation Jobs',
             dismiss: 'Dismiss',
