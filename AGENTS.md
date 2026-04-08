@@ -6,6 +6,7 @@
 作者以逆向工程方式仿造 EME 功能邏輯，完整掌控代碼。
 
 - **Plugin ID:** `lingua-reel`
+- **命名慣例：** 對外品牌名為 `LinguaReel`；內部代碼前綴（TS class 名、CSS class、event 名、DB 名）統一沿用 `vll`，不做更換。
 - **Entry point:** `src/main.ts` → bundled to `main.js`
 - **Package manager:** npm
 - **Bundler:** esbuild（`esbuild.config.mjs`）
