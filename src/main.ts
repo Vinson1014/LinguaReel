@@ -81,7 +81,7 @@ export default class VLLPlugin extends Plugin {
         this.registerView(VIEW_TYPE_SHADOWING,  leaf => new ShadowingView(leaf, this));
 
         // Ribbon 圖示（單一入口）
-        this.addRibbonIcon('layout-dashboard', t('home.viewTitle'), () => this.openView(VIEW_TYPE_HOME));
+        this.addRibbonIcon('clapperboard', t('home.viewTitle'), () => this.openView(VIEW_TYPE_HOME));
 
         // 指令
         this.addCommand({

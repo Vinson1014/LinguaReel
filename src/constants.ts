@@ -1,10 +1,10 @@
 // ===== View 識別碼 =====
 
-export const VIEW_TYPE_HOME       = 'vll-home-view';
-export const VIEW_TYPE_DICT       = 'vll-dict-view';
-export const VIEW_TYPE_HIGHLIGHT  = 'vll-highlight-view';
-export const VIEW_TYPE_FLASHCARD  = 'vll-flashcard-view';
-export const VIEW_TYPE_SHADOWING  = 'vll-shadowing-view';
+export const VIEW_TYPE_HOME       = 'lingua-reel-home-view';
+export const VIEW_TYPE_DICT       = 'lingua-reel-dict-view';
+export const VIEW_TYPE_HIGHLIGHT  = 'lingua-reel-highlight-view';
+export const VIEW_TYPE_FLASHCARD  = 'lingua-reel-flashcard-view';
+export const VIEW_TYPE_SHADOWING  = 'lingua-reel-shadowing-view';
 
 // ===== IndexedDB =====
 

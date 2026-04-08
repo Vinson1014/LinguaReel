@@ -23,7 +23,7 @@ export class HomeView extends ItemView {
 
     getViewType(): string    { return VIEW_TYPE_HOME; }
     getDisplayText(): string { return t('home.viewTitle'); }
-    getIcon(): string        { return 'layout-dashboard'; }
+    getIcon(): string        { return 'clapperboard'; }
 
     async onOpen(): Promise<void> {
         await this.render();
@@ -77,7 +77,7 @@ export class HomeView extends ItemView {
             link.addEventListener('click', () => {
                 // @ts-ignore — Obsidian 內部 API
                 (this.plugin.app as any).setting?.open?.();
-                (this.plugin.app as any).setting?.openTabById?.('vll');
+                (this.plugin.app as any).setting?.openTabById?.('lingua-reel');
             });
         }
 
