@@ -6,5 +6,5 @@
 	"description": "AI-powered language learning plugin for Obsidian — video shadowing with synced subtitles, LLM dictionary, FSRS flashcards, and AI annotation pipeline.",
 	"author": "Vinson",
 	"authorUrl": "",
-	"isDesktopOnly": false
+	"isDesktopOnly": true
 }
