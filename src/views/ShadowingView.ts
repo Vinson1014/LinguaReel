@@ -512,11 +512,19 @@ export class ShadowingView extends ItemView {
         if (lineIdx === -1) return;
 
         const line = lines[lineIdx]!;
-        // Only wrap the first occurrence; skip if already wrapped
-        if (!line.includes(selectedText)) return;
 
-        const marked     = `<mark style="background: ${colorHex};">${selectedText}</mark>`;
-        lines[lineIdx]   = line.replace(selectedText, marked);
+        // Separate subtitle text from annotation block (annotation starts at first <div)
+        const divIdx   = line.indexOf('<div');
+        const textPart = divIdx >= 0 ? line.slice(0, divIdx) : line;
+        const divPart  = divIdx >= 0 ? line.slice(divIdx) : '';
+
+        // AnnotationFormatter wraps annotated words in **...**; strip them so that
+        // selectedText (DOM plain text) matches against the file content.
+        const plainText = textPart.replace(/\*\*/g, '');
+        if (!plainText.includes(selectedText)) return;
+
+        const marked   = `<mark style="background: ${colorHex};">${selectedText}</mark>`;
+        lines[lineIdx] = plainText.replace(selectedText, marked) + divPart;
         await this.plugin.app.vault.modify(this.currentFile, lines.join('\n'));
     }
 
