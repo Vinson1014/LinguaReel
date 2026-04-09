@@ -233,6 +233,18 @@ pip install openai-whisper
 
 ## Installation
 
+### Via BRAT (Recommended)
+
+[BRAT](https://github.com/TfTHacker/obsidian42-brat) is a community tool for installing plugins directly from GitHub.
+
+1. Install and enable the **BRAT** plugin in Obsidian
+2. BRAT → **Add Beta Plugin**
+3. Enter `Vinson1014/LinguaReel` and click Add Plugin
+4. Enable **LinguaReel** in **Community plugins**
+
+> [!TIP]
+> BRAT supports automatic updates — you'll be notified when new versions are available.
+
 ### Manual
 
 1. Download `main.js`, `manifest.json`, `styles.css` from the [latest release](../../releases/latest)

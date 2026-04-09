@@ -233,6 +233,18 @@ pip install openai-whisper
 
 ## 安装插件
 
+### 通过 BRAT 安装（推荐）
+
+[BRAT](https://github.com/TfTHacker/obsidian42-brat) 是 Obsidian 社区的 Beta 测试工具，可直接从 GitHub 安装未上架的插件。
+
+1. 在 Obsidian 安装并启用 **BRAT** 插件
+2. BRAT → **Add Beta Plugin**
+3. 输入 `Vinson1014/LinguaReel`，点击 Add Plugin
+4. 在 **Community plugins** 中启用 **LinguaReel**
+
+> [!TIP]
+> BRAT 支持自动更新，之后有新版本会自动提示。
+
 ### 手动安装
 
 1. 从 [最新 Release](../../releases/latest) 下载 `main.js`、`manifest.json`、`styles.css`
