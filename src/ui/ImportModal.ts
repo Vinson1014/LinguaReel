@@ -181,8 +181,10 @@ export class ImportModal extends Modal {
         );
         const subtitles = SubtitleParser.parseVTT(fs.readFileSync(vttPath, 'utf-8'));
         const merged    = SubtitleParser.mergeShortEntries(subtitles, this.settings.subtitleMergeGap);
-        const fileName  = path.basename(filePath);
-        await this.saveNote({ title: fileName, source: filePath, type: 'local' }, merged);
+        const fileName  = path.basename(filePath, path.extname(filePath));
+        const vaultBase = (this.app.vault.adapter as any).basePath as string;
+        const relSource = path.relative(vaultBase, filePath).replace(/\\/g, '/');
+        await this.saveNote({ title: fileName, source: relSource, type: 'local' }, merged);
     }
 
     private async saveNote(video: any, subtitles: any[]): Promise<void> {
