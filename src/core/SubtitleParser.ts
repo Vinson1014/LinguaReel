@@ -35,7 +35,7 @@ export class SubtitleParser {
 
             const parts = timeLine.split('-->');
             const startStr = parts[0]?.trim();
-            const endStr   = parts[1]?.split(' ')[0]?.trim();  // 忽略 cue settings
+            const endStr   = parts[1]?.trim().split(/\s+/)[0];  // trim 先去掉 leading space，再 split 忽略 cue settings
             if (!startStr || !endStr) continue;
 
             const start = this.vttTimeToSeconds(startStr);
