@@ -199,6 +199,13 @@ const zhTW: Translations = {
         warningCount:     '{count} 個警告，請查看開發者工具 Console',
         openAnnotated:    '開啟標註版筆記',
         dictationPrompt:  '你聽到了什麼？',
+        embedBlocked:        '此影片限制嵌入播放（影片擁有者已關閉）',
+        downloadForPlayback: '下載影片到本地以供跟播',
+        downloadingVideo:    '正在下載影片...',
+        downloadVideoBtn:    '下載影片',
+        downloadSuccess:     '下載完成，重新載入中...',
+        downloadError:       '下載失敗：{msg}',
+        downloadNeedYtdlp:   '下載影片需要安裝 yt-dlp。',
     },
 
     importModal: {

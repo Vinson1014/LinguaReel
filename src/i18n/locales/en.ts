@@ -205,6 +205,13 @@ const en = {
         warningCount:     '{count} warning(s) — check DevTools console',
         openAnnotated:    'Open annotated note',
         dictationPrompt:  'What did you hear?',
+        embedBlocked:        'This video cannot be embedded — the owner has restricted playback.',
+        downloadForPlayback: 'Download video for local playback',
+        downloadingVideo:    'Downloading video...',
+        downloadVideoBtn:    'Download video',
+        downloadSuccess:     'Download complete, reloading...',
+        downloadError:       'Download failed: {msg}',
+        downloadNeedYtdlp:   'yt-dlp is required to download videos.',
     },
 
     // ── 影片匯入 Modal ─────────────────────────────

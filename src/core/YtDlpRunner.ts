@@ -80,6 +80,34 @@ export class YtDlpRunner {
     }
 
     /**
+     * 下載影片到暫存目錄（供本地跟播用）
+     * @returns 影片檔案路徑（mp4 優先）
+     */
+    async downloadVideo(url: string, onProgress?: (msg: string) => void): Promise<string> {
+        const tempDir        = this.createTempDir();
+        const outputTemplate = path.join(tempDir, '%(title)s.%(ext)s');
+
+        onProgress?.('正在下載影片...');
+
+        await execFileAsync(
+            this.ytdlpPath,
+            [
+                '-f', 'bestvideo[ext=mp4]+bestaudio[ext=m4a]/best[ext=mp4]/best',
+                '--merge-output-format', 'mp4',
+                '--windows-filenames',
+                '--no-playlist', '-o', outputTemplate, url,
+            ],
+            { timeout: 600000, env: { ...process.env, PYTHONIOENCODING: 'utf-8', PYTHONUTF8: '1' } }
+        );
+
+        const files     = fs.readdirSync(tempDir);
+        const videoFile = files.find(f => /\.(mp4|webm|mkv|mov)$/i.test(f));
+        if (!videoFile) throw new Error('yt-dlp 下載完成但找不到影片檔');
+
+        return path.join(tempDir, videoFile);
+    }
+
+    /**
      * 下載音頻到暫存目錄（給 Whisper 轉錄用）
      * @returns 音頻檔案路徑（mp3）
      */

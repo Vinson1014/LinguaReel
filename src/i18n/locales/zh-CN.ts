@@ -199,6 +199,13 @@ const zhCN: Translations = {
         warningCount:     '{count} 个警告，请查看开发者工具 Console',
         openAnnotated:    '打开标注版笔记',
         dictationPrompt:  '你听到了什么？',
+        embedBlocked:        '此视频限制嵌入播放（视频拥有者已关闭）',
+        downloadForPlayback: '下载视频到本地以供跟读',
+        downloadingVideo:    '正在下载视频...',
+        downloadVideoBtn:    '下载视频',
+        downloadSuccess:     '下载完成，重新加载中...',
+        downloadError:       '下载失败：{msg}',
+        downloadNeedYtdlp:   '下载视频需要安装 yt-dlp。',
     },
 
     importModal: {

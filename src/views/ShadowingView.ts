@@ -1,10 +1,13 @@
 import { ItemView, TFile, WorkspaceLeaf, normalizePath } from 'obsidian';
+import * as fs from 'fs';
+import * as path from 'path';
 import { VIEW_TYPE_SHADOWING } from '../constants';
 import { t } from '../i18n';
 import type VLLPlugin from '../main';
 import type { ShadowingEntry } from '../types';
 import { SubtitleParser } from '../core/SubtitleParser';
 import { NoteGenerator } from '../core/NoteGenerator';
+import { YtDlpRunner } from '../core/YtDlpRunner';
 
 // ─── YouTube IFrame API minimal types ────────────────────────────────────────
 
@@ -29,7 +32,7 @@ interface YTPlayer {
 interface YTPlayerOptions {
     videoId: string;
     playerVars?: Record<string, unknown>;
-    events?: { onReady?: () => void };
+    events?: { onReady?: () => void; onError?: (e: { data: number }) => void };
 }
 
 // ─── Internal types ───────────────────────────────────────────────────────────
@@ -582,6 +585,11 @@ export class ShadowingView extends ItemView {
                             this.ytPlayer?.setPlaybackRate(this.speed);
                             this.startYtTick();
                         },
+                        onError: (e: { data: number }) => {
+                            if (e.data === 101 || e.data === 150) {
+                                this.renderEmbedBlockedUI(container, videoId);
+                            }
+                        },
                     },
                 });
             } catch (e) { console.error('[VLL] YT init error:', e); }
@@ -591,6 +599,80 @@ export class ShadowingView extends ItemView {
             this.loadYouTubeApi(tryInit);
         } else {
             tryInit();
+        }
+    }
+
+    private renderEmbedBlockedUI(container: HTMLElement, videoId: string): void {
+        container.empty();
+        const wrap = container.createDiv({ cls: 'vll-embed-blocked' });
+        wrap.createEl('p', { text: t('shadowing.embedBlocked'), cls: 'vll-embed-blocked-msg' });
+
+        const statusEl = wrap.createEl('p', { cls: 'vll-embed-blocked-status' });
+
+        const btn = wrap.createEl('button', {
+            text: t('shadowing.downloadVideoBtn'),
+            cls:  'mod-cta',
+        });
+        btn.addEventListener('click', async () => {
+            btn.disabled = true;
+            await this.downloadVideoLocally(videoId, statusEl);
+            btn.disabled = false;
+        });
+    }
+
+    private async downloadVideoLocally(videoId: string, statusEl: HTMLElement): Promise<void> {
+        const { app } = this.plugin;
+        const file = this.currentFile;
+        if (!file) return;
+
+        if (!this.plugin.envStatus.ytdlp.available) {
+            statusEl.textContent = t('shadowing.downloadNeedYtdlp');
+            return;
+        }
+
+        const url   = `https://www.youtube.com/watch?v=${videoId}`;
+        const ytdlp = new YtDlpRunner(this.plugin.settings.ytdlpPath);
+
+        try {
+            const videoPath = await ytdlp.downloadVideo(url, msg => { statusEl.textContent = msg; });
+            const filename  = path.basename(videoPath);
+
+            statusEl.textContent = '正在儲存至 vault...';
+
+            // 用 Obsidian 的附件路徑設定決定存放位置
+            const destPath = await app.fileManager.getAvailablePathForAttachment(filename, file.path);
+
+            // 確保目標資料夾存在
+            const destFolder = path.dirname(destPath);
+            if (destFolder && !(await app.vault.adapter.exists(destFolder))) {
+                await app.vault.createFolder(destFolder);
+            }
+
+            // 複製影片進 vault
+            const vaultBase  = (app.vault.adapter as any).basePath as string;
+            const absDestPath = path.join(vaultBase, destPath.replace(/\//g, path.sep));
+            fs.copyFileSync(videoPath, absDestPath);
+            YtDlpRunner.cleanupTempDir(path.dirname(videoPath));
+
+            // 在筆記 frontmatter 後插入 wikilink
+            const content    = await app.vault.read(file);
+            const wikilink   = `![[${path.basename(destPath)}]]`;
+            if (!content.includes(wikilink)) {
+                const updated = content.replace(
+                    /^(---\n[\s\S]*?\n---\n)/,
+                    `$1\n${wikilink}\n`,
+                );
+                await app.vault.modify(file, updated);
+            }
+
+            statusEl.textContent = t('shadowing.downloadSuccess');
+
+            // 重新載入（先清 currentFile 讓 loadNote 不會跳過）
+            this.currentFile = null;
+            await this.loadNote(file);
+
+        } catch (e: any) {
+            statusEl.textContent = t('shadowing.downloadError', { msg: e.message });
         }
     }
 
