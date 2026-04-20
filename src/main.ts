@@ -73,6 +73,9 @@ export default class VLLPlugin extends Plugin {
         // 在背景偵測外部工具
         this.detectEnvironment();
 
+        // 清理上次 crash 或異常中止留下的暫存目錄
+        YtDlpRunner.sweepOrphanedTempDirs();
+
         // 註冊 Views
         this.registerView(VIEW_TYPE_HOME,       leaf => new HomeView(leaf, this));
         this.registerView(VIEW_TYPE_DICT,       leaf => new DictView(leaf, this));

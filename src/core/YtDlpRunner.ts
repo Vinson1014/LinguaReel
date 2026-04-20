@@ -110,6 +110,25 @@ export class YtDlpRunner {
         } catch { /* 清理失敗不影響主流程 */ }
     }
 
+    /** 啟動時清理殘留的 vll-* 暫存目錄（crash 或異常中止留下的） */
+    static sweepOrphanedTempDirs(): void {
+        const tmpDir  = os.tmpdir();
+        const oneHour = 60 * 60 * 1000;
+        try {
+            for (const name of fs.readdirSync(tmpDir)) {
+                if (!/^vll-(import|whisper)-/.test(name)) continue;
+                const fullPath = path.join(tmpDir, name);
+                try {
+                    const stat = fs.statSync(fullPath);
+                    if (!stat.isDirectory()) continue;
+                    if (Date.now() - stat.mtimeMs > oneHour) {
+                        fs.rmSync(fullPath, { recursive: true, force: true });
+                    }
+                } catch { /* 單一目錄失敗不影響其他 */ }
+            }
+        } catch { /* tmpdir 無法讀取時靜默忽略 */ }
+    }
+
     // ===== 私有方法 =====
 
     private createTempDir(): string {
