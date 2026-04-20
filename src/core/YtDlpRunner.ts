@@ -36,14 +36,14 @@ export class YtDlpRunner {
     async getVideoInfo(url: string): Promise<VideoInfo> {
         const { stdout } = await execFileAsync(
             this.ytdlpPath,
-            ['--print', '%(title)s\t%(duration)s', '--no-playlist', url],
-            { timeout: 30000 }
+            ['--dump-json', '--no-playlist', url],
+            { timeout: 30000, env: { ...process.env, PYTHONIOENCODING: 'utf-8', PYTHONUTF8: '1' } }
         );
-        const [title, durationStr] = stdout.trim().split('\t');
+        const info = JSON.parse(stdout.trim());
         return {
-            title:    title ?? '未知標題',
+            title:    info.title ?? '未知標題',
             source:   url,
-            duration: durationStr ? parseFloat(durationStr) : undefined,
+            duration: typeof info.duration === 'number' ? info.duration : undefined,
             type:     'youtube',
         };
     }
@@ -67,7 +67,7 @@ export class YtDlpRunner {
                     '-o', outputTemplate,
                     url,
                 ],
-                { timeout: 60000 }
+                { timeout: 60000, env: { ...process.env, PYTHONIOENCODING: 'utf-8', PYTHONUTF8: '1' } }
             );
 
             const files   = fs.readdirSync(tempDir);
@@ -93,7 +93,7 @@ export class YtDlpRunner {
             this.ytdlpPath,
             ['-x', '--audio-format', 'mp3', '--audio-quality', '5',
              '--no-playlist', '-o', outputTemplate, url],
-            { timeout: 300000 }
+            { timeout: 300000, env: { ...process.env, PYTHONIOENCODING: 'utf-8', PYTHONUTF8: '1' } }
         );
 
         const files   = fs.readdirSync(tempDir);

@@ -203,9 +203,12 @@ const zhTW: Translations = {
 
     importModal: {
         title:       '匯入影片到跟讀工坊',
-        inputLabel:  'YouTube 網址或本地影片路徑',
-        inputDesc:   '支援 youtube.com/watch、youtu.be、本地 mp4/mkv/mp3 路徑',
+        inputLabel:  '影片網址或本地路徑',
+        inputDesc:   '支援 YouTube、任何 yt-dlp 相容網址或本地 mp4/mkv/mp3 路徑',
         inputPlaceholder: 'https://www.youtube.com/watch?v=...',
+        subtitleMethodLabel: '字幕來源',
+        methodAuto:    '自動 — 優先從來源抓字幕，無字幕才用 Whisper 轉錄',
+        methodWhisper: '強制 Whisper — 下載影片並重新轉錄音頻',
         toolStatus:  '工具狀態：',
         ytdlpOk:     '✅ yt-dlp {version}',
         ytdlpFail:   '❌ yt-dlp 未安裝（Tier 1/2 不可用）',

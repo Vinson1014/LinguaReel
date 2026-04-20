@@ -22,6 +22,7 @@ export class ImportModal extends Modal {
     private statusEl!: HTMLElement;
     private progressEl!: HTMLElement;
     private importBtn!: HTMLButtonElement;
+    private subtitleMethod: 'auto' | 'whisper' = 'auto';
 
     constructor(
         app: App,
@@ -50,6 +51,9 @@ export class ImportModal extends Modal {
                     if (e.key === 'Enter') this.startImport();
                 });
             });
+
+        // 字幕來源選擇
+        this.renderSubtitleMethodSelector(contentEl);
 
         // 工具狀態
         this.renderToolStatus(contentEl);
@@ -89,9 +93,15 @@ export class ImportModal extends Modal {
         this.progressEl.style.display = 'block';
 
         try {
-            const isYouTube = YouTubeTranscript.extractVideoId(input) !== null;
-            if (isYouTube) {
+            const isNetworkUrl = /^https?:\/\//i.test(input);
+            const isYouTube    = YouTubeTranscript.extractVideoId(input) !== null;
+
+            if (this.subtitleMethod === 'whisper' && isNetworkUrl) {
+                await this.importNetworkWithWhisper(input);
+            } else if (isYouTube) {
                 await this.importYouTube(input);
+            } else if (isNetworkUrl) {
+                await this.importNetworkWithWhisper(input);
             } else {
                 await this.importLocalVideo(input);
             }
@@ -135,23 +145,10 @@ export class ImportModal extends Modal {
                 return;
             }
 
-            // Tier 2（透過 yt-dlp 下載音頻 + Whisper 轉錄）
+            // Tier 2
             if (this.envStatus.whisper.available) {
                 this.showProgress('此影片無字幕，準備使用 Whisper 轉錄...');
-                const audioPath = await ytdlp.downloadAudio(url, msg => this.showProgress(msg));
-                const whisper   = new WhisperRunner(
-                    this.settings.whisperPath,
-                    this.settings.whisperModel,
-                    this.settings.whisperDevice
-                );
-                const vttPath   = await whisper.transcribe(
-                    audioPath, undefined,
-                    this.settings.annotationLanguage,
-                    msg => this.showProgress(msg)
-                );
-                const subtitles = SubtitleParser.parseVTT(fs.readFileSync(vttPath, 'utf-8'));
-                const merged    = SubtitleParser.mergeShortEntries(subtitles, this.settings.subtitleMergeGap);
-                await this.saveNote(videoInfo, merged);
+                await this.transcribeAndSave(ytdlp, url, videoInfo);
                 return;
             }
 
@@ -159,6 +156,41 @@ export class ImportModal extends Modal {
         }
 
         throw new Error('無法取得字幕：Tier 0 失敗，且未安裝 yt-dlp。');
+    }
+
+    private async importNetworkWithWhisper(url: string): Promise<void> {
+        if (!this.envStatus.ytdlp.available) {
+            throw new Error('下載網路影片需要 yt-dlp，請先安裝。');
+        }
+        if (!this.envStatus.whisper.available) {
+            throw new Error('Whisper 轉錄需要安裝 faster-whisper 或 WhisperX。');
+        }
+
+        const ytdlp = new YtDlpRunner(this.settings.ytdlpPath);
+        this.showProgress('正在取得影片資訊...');
+        const videoInfo = await ytdlp.getVideoInfo(url);
+
+        this.showProgress('準備使用 Whisper 轉錄...');
+        await this.transcribeAndSave(ytdlp, url, videoInfo);
+    }
+
+    private async transcribeAndSave(ytdlp: YtDlpRunner, url: string, videoInfo: any): Promise<void> {
+        const audioPath = await ytdlp.downloadAudio(url, msg => this.showProgress(msg));
+        const whisper   = new WhisperRunner(
+            this.settings.whisperPath,
+            this.settings.whisperModel,
+            this.settings.whisperDevice
+        );
+        const vttPath   = await whisper.transcribe(
+            audioPath, undefined,
+            this.settings.annotationLanguage,
+            msg => this.showProgress(msg)
+        );
+        const subtitles = SubtitleParser.parseVTT(fs.readFileSync(vttPath, 'utf-8'));
+        const merged    = SubtitleParser.mergeShortEntries(subtitles, this.settings.subtitleMergeGap);
+        YtDlpRunner.cleanupTempDir(path.dirname(audioPath));
+        YtDlpRunner.cleanupTempDir(path.dirname(vttPath));
+        await this.saveNote(videoInfo, merged);
     }
 
     private async importLocalVideo(filePath: string): Promise<void> {
@@ -181,6 +213,7 @@ export class ImportModal extends Modal {
         );
         const subtitles = SubtitleParser.parseVTT(fs.readFileSync(vttPath, 'utf-8'));
         const merged    = SubtitleParser.mergeShortEntries(subtitles, this.settings.subtitleMergeGap);
+        YtDlpRunner.cleanupTempDir(path.dirname(vttPath));
         const fileName  = path.basename(filePath, path.extname(filePath));
         const vaultBase = (this.app.vault.adapter as any).basePath as string;
         const relSource = path.relative(vaultBase, filePath).replace(/\\/g, '/');
@@ -213,6 +246,28 @@ export class ImportModal extends Modal {
     }
 
     // ===== UI 輔助方法 =====
+
+    private renderSubtitleMethodSelector(container: HTMLElement): void {
+        const setting = new Setting(container)
+            .setName(t('importModal.subtitleMethodLabel'));
+
+        const radioGroup = setting.settingEl.createDiv({ cls: 'vll-method-radio-group' });
+        radioGroup.style.cssText = 'display:flex; flex-direction:column; gap:6px; margin-top:4px;';
+
+        for (const method of ['auto', 'whisper'] as const) {
+            const label = radioGroup.createEl('label', { cls: 'vll-method-label' });
+            label.style.cssText = 'display:flex; align-items:center; gap:8px; cursor:pointer;';
+
+            const radio = label.createEl('input');
+            radio.type    = 'radio';
+            radio.name    = 'vll-subtitle-method';
+            radio.value   = method;
+            radio.checked = method === this.subtitleMethod;
+            radio.addEventListener('change', () => { this.subtitleMethod = method; });
+
+            label.appendText(t(`importModal.method${method === 'auto' ? 'Auto' : 'Whisper'}`));
+        }
+    }
 
     private renderToolStatus(container: HTMLElement): void {
         const div = container.createDiv({ cls: 'vll-tool-status' });

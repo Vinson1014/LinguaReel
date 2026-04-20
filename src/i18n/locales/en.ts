@@ -210,9 +210,12 @@ const en = {
     // ── 影片匯入 Modal ─────────────────────────────
     importModal: {
         title:       'Import Video to Shadowing Workshop',
-        inputLabel:  'YouTube URL or Local Video Path',
-        inputDesc:   'Supports youtube.com/watch, youtu.be, local mp4/mkv/mp3 paths',
+        inputLabel:  'Video URL or Local Path',
+        inputDesc:   'Supports YouTube, any yt-dlp compatible URL, or local mp4/mkv/mp3 paths',
         inputPlaceholder: 'https://www.youtube.com/watch?v=...',
+        subtitleMethodLabel: 'Subtitle source',
+        methodAuto:    'Auto — fetch subtitles from source, use Whisper as fallback',
+        methodWhisper: 'Force Whisper — download and transcribe audio',
         toolStatus:  'Tool Status:',
         ytdlpOk:     '✅ yt-dlp {version}',
         ytdlpFail:   '❌ yt-dlp not installed (Tier 1/2 unavailable)',
