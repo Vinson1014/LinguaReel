@@ -252,7 +252,16 @@ export class VLLSettingTab extends PluginSettingTab {
 
         new Setting(el)
             .setName(t('settings.ai.learnerLevel'))
-            .setDesc(t('settings.ai.learnerLevelDesc'))
+            .setDesc((() => {
+                const frag = document.createDocumentFragment();
+                const list = frag.createEl('ul', { attr: { style: 'margin: 4px 0 0 1em; padding: 0;' } });
+                (['A1', 'A2', 'B1', 'B2', 'C1', 'C2'] as LearnerLevel[]).forEach(lvl => {
+                    const li = list.createEl('li');
+                    li.createEl('strong', { text: t(`settings.ai.level${lvl}` as any) });
+                    li.appendText(': ' + t(`settings.ai.level${lvl}Desc` as any));
+                });
+                return frag;
+            })())
             .addDropdown(dd => {
                 (['A1', 'A2', 'B1', 'B2', 'C1', 'C2'] as LearnerLevel[]).forEach(lvl => {
                     dd.addOption(lvl, t(`settings.ai.level${lvl}` as any));
