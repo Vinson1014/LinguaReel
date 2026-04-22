@@ -1,7 +1,7 @@
 import { App, Notice, PluginSettingTab, Setting, TFile } from 'obsidian';
 import type VLLPlugin from './main';
 import { t } from './i18n';
-import type { OutputLanguage, ProviderProfile, VLLSettings } from './types';
+import type { LearnerLevel, OutputLanguage, ProviderProfile, VLLSettings } from './types';
 import { LANGUAGE_PACK_FOLDER } from './constants';
 
 // ===== Provider 預設值（首次切換時使用） =====
@@ -36,6 +36,7 @@ export const DEFAULT_SETTINGS: VLLSettings = {
     annotationLanguage:     'ja',
     annotationSystemPrompt: '',
     annotationBatchSize:    3,
+    learnerLevel:           'B1',
 
     // 跟讀
     shadowingOutputFolder: 'Shadowing',
@@ -246,6 +247,20 @@ export class VLLSettingTab extends PluginSettingTab {
                     this.plugin.settings.annotationLanguage = v;
                     await this.plugin.saveSettings();
                     this.display();
+                });
+            });
+
+        new Setting(el)
+            .setName(t('settings.ai.learnerLevel'))
+            .setDesc(t('settings.ai.learnerLevelDesc'))
+            .addDropdown(dd => {
+                (['A1', 'A2', 'B1', 'B2', 'C1', 'C2'] as LearnerLevel[]).forEach(lvl => {
+                    dd.addOption(lvl, t(`settings.ai.level${lvl}` as any));
+                });
+                dd.setValue(this.plugin.settings.learnerLevel);
+                dd.onChange(async v => {
+                    this.plugin.settings.learnerLevel = v as LearnerLevel;
+                    await this.plugin.saveSettings();
                 });
             });
 

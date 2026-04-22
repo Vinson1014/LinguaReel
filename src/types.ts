@@ -88,10 +88,24 @@ export interface ShadowingEntry {
     text:      string;
 }
 
+/** 標注分類 taxonomy — 7 個固定類型 */
+export type AnnotationType =
+    | 'Grammar'
+    | 'Idiom'
+    | 'Phrasal Verb'
+    | 'Vocab'
+    | 'Slang'
+    | 'Register'
+    | 'Culture';
+
 export interface AnnotationItem {
     original:          string;
+    /** 標注分類，必須是 7 種 AnnotationType 之一 */
+    type:              AnnotationType;
     key:               string;
     explanation:       string;
+    /** 源語言例句，展示此詞在不同語境的用法 */
+    example?:          string;
     translation_word?: string;
 }
 
@@ -106,6 +120,9 @@ export interface AnnotatedEntry {
     translation: string;
     annotations: AnnotationItem[];
 }
+
+/** CEFR 語言等級 */
+export type LearnerLevel = 'A1' | 'A2' | 'B1' | 'B2' | 'C1' | 'C2';
 
 // ===== 高亮筆記 =====
 
@@ -191,6 +208,8 @@ export interface VLLSettings {
     annotationSystemPrompt: string;
     /** 標注 Pipeline 每批並行請求數（1–20，預設 3）*/
     annotationBatchSize:    number;
+    /** 學習者 CEFR 等級，控制標注密度與說明深度 */
+    learnerLevel:           LearnerLevel;
 
     // ── 跟讀 / 影片 ───────────────────────────────
     shadowingOutputFolder: string;

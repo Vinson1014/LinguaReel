@@ -15,7 +15,7 @@ import { WhisperRunner } from './core/WhisperRunner';
 import { SubtitleParser } from './core/SubtitleParser';
 import { AnnotationPipeline } from './core/AnnotationPipeline';
 import { NoteGenerator } from './core/NoteGenerator';
-import { getAnnotationSystemPrompt, getSubtitleSummaryMessages, type SubtitleSummary } from './llm/prompts';
+import { getAnnotationSystemPrompt, getSubtitleSummaryMessages, resolveOutputLang, type SubtitleSummary } from './llm/prompts';
 import {
     VIEW_TYPE_HOME,
     VIEW_TYPE_DICT,
@@ -336,9 +336,11 @@ export default class VLLPlugin extends Plugin {
                 window.setTimeout(() => { pendingEmit = false; this._emitJobUpdate(); }, 150);
             };
 
+            const targetLang = resolveOutputLang(this.settings.outputLanguage, this.settings.uiLanguage);
             const pipeline = new AnnotationPipeline(this.llm);
             const result   = await pipeline.run(entries, {
                 systemPrompt,
+                targetLang,
                 signal:    abort.signal,
                 batchSize: this.settings.annotationBatchSize,
                 onProgress: (done, total) => {

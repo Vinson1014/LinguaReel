@@ -1,4 +1,4 @@
-import type { AnnotatedEntry } from '../types';
+import type { AnnotatedEntry, AnnotationItem } from '../types';
 import { t } from '../i18n';
 
 /**
@@ -19,12 +19,21 @@ function spanUnderline(text: string): string {
     return `<span class="vll-ann-underline">${text}</span>`;
 }
 
-/** 小課堂 div（粉色左框） */
-function lessonDiv(key: string, explanation: string): string {
+/** 小課堂 div（粉色左框）
+ *  格式：小課堂："original" [Type] key — explanation
+ *          e.g. example sentence
+ */
+function lessonDiv(ann: AnnotationItem): string {
+    const quote   = `<span class="vll-ann-quote">"${ann.original}"</span>`;
+    const typeTag = `<span class="vll-ann-type">[${ann.type}]</span>`;
+    const example = ann.example
+        ? `<div class="vll-ann-example"><em>e.g.</em> ${ann.example}</div>`
+        : '';
     return (
         '<div class="vll-ann-lesson">'
       + `<span class="vll-ann-label vll-ann-lesson-label">${t('annotation.lessonLabel')}</span>：`
-      + `<span class="vll-ann-key">${key}</span> ${explanation}`
+      + `${quote} ${typeTag} <span class="vll-ann-key">${ann.key}</span> — ${ann.explanation}`
+      + example
       + '</div>'
     );
 }
@@ -71,7 +80,7 @@ export function formatAnnotatedLine(entry: AnnotatedEntry): string {
     // 組裝小課堂 div
     const lessonsHtml = entry.annotations
         .filter(a => a.key && a.explanation)
-        .map(a => lessonDiv(a.key, a.explanation))
+        .map(a => lessonDiv(a))
         .join('');
 
     return (

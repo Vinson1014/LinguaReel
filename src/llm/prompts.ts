@@ -1,4 +1,4 @@
-import type { OutputLanguage, UILanguage } from '../types';
+import type { LearnerLevel, OutputLanguage, UILanguage } from '../types';
 import { getCurrentLang } from '../i18n';
 
 // ─── Output Language Resolution ──────────────────────────────────────────────
@@ -46,49 +46,79 @@ export function resolveSourceLang(annotationLanguage: string): string {
 //
 // The system prompt is assembled in two layers:
 //
-//   [Base layer]  — hardcoded in TypeScript; defines the JSON output schema and
-//                   core constraints (exact-substring rule, 0–3 limit, etc.)
-//                   Guarantees stable, parseable LLM output regardless of packs.
+//   [Base layer]  — hardcoded in TypeScript; defines the JSON output schema,
+//                   7-type annotation taxonomy, CEFR level guidance, and core
+//                   constraints. Guarantees stable, parseable LLM output.
 //
 //   [Pack layer]  — loaded from LinguaReel/language-packs/{code}.md in the vault.
 //                   Contains language-specific teaching style, annotation priorities,
 //                   and translation guidance. Users can freely edit this.
 //                   If the file is absent the base layer alone is used (still works).
 //
-// This decoupling means bad pack edits can degrade teaching quality but cannot
-// break JSON parsing.
+// At call time, AnnotationPipeline appends the already-annotated terms list
+// to the system prompt dynamically to enable cross-sentence deduplication.
+
+const LEVEL_GUIDANCE: Record<LearnerLevel, string> = {
+    A1: 'Annotate basic vocabulary and simple grammar structures. Prefer Vocab and Grammar types. Explanations must be very simple and direct — one clear sentence. Annotate generously (2–3 per line if possible).',
+    A2: 'Annotate vocabulary and common grammar patterns. Prefer Vocab and Grammar types. Explanations should be simple and concrete. Annotate generously (2–3 per line if possible).',
+    B1: 'Focus on idioms, phrasal verbs, and intermediate vocabulary. Skip basic grammar (present/past tense) and common everyday words. Explanations can include nuance and usage context.',
+    B2: 'Focus on idioms, collocations, register differences, and advanced vocabulary. Skip anything a B1 learner would already know. Explanations should include subtle meaning differences and usage constraints.',
+    C1: 'Focus only on advanced register, rare collocations, cultural references, and nuanced idioms. Skip anything below C1 level. Explanations can be sophisticated and assume strong grammatical knowledge.',
+    C2: 'Annotate only the most culturally specific, register-sensitive, or lexically rare items. Virtually no grammar annotations. Explanations should address nuance, etymology, or pragmatic subtleties.',
+};
 
 /**
- * Hardcoded base prompt — JSON schema + core constraints.
+ * Hardcoded base prompt — JSON schema, taxonomy, level guidance.
  * Language-specific guidance is injected via packBody.
+ * Already-annotated terms are appended dynamically by AnnotationPipeline.
  */
-function buildAnnotationBasePrompt(sourceLang: string, targetLang: string): string {
+function buildAnnotationBasePrompt(
+    sourceLang:   string,
+    targetLang:   string,
+    learnerLevel: LearnerLevel,
+): string {
     return `\
-You are a language teacher and subtitle translator helping a student learn ${sourceLang}.
-Your task: read a single subtitle line in ${sourceLang}, translate it into ${targetLang}, and identify up to 3 grammar or vocabulary points worth teaching.
+You are a language teacher helping a student (CEFR level: ${learnerLevel}) learn ${sourceLang}.
+Your task: read a single subtitle line in ${sourceLang}, translate it into ${targetLang}, and identify 0–3 points worth teaching at this learner's level.
 
-## Output format — respond with JSON ONLY, no markdown, no HTML:
+## Output format — respond with JSON ONLY, no markdown:
 {
   "translation": "${targetLang} translation of the subtitle",
   "annotations": [
     {
       "original": "exact substring from the original ${sourceLang} text — never paraphrase",
-      "key": "grammar point or vocabulary title",
-      "explanation": "concise explanation in ${targetLang} (1-2 sentences)",
+      "type": "one of the 7 types listed below",
+      "key": "the term in its natural form — Vocab/Idiom/Phrasal Verb/Slang: copy from 'original' (e.g. めちゃくちゃ, make sense, 대박); Grammar: standard notation in ${sourceLang} convention (e.g. V-てほしい, 〜なきゃ, Present Perfect, V-아/어야 하다); Register/Culture: short label in ${targetLang}",
+      "explanation": "1–2 sentence explanation in ${targetLang}, specific to this use",
+      "example": "one new ${sourceLang} example sentence in a different context",
       "translation_word": "corresponding word/phrase in the translation (optional)"
     }
   ]
 }
 
+## Annotation types — "type" must be exactly one of these 7 values:
+- Grammar: grammatical structures and patterns (e.g. Present Perfect, modal verbs)
+- Idiom: multi-word expressions with non-literal meaning (e.g. make sense, a ton of)
+- Phrasal Verb: verb + particle with special meaning (e.g. pick up, open up, get to)
+- Vocab: single words worth learning at this level (e.g. subpar, telltale)
+- Slang: informal / colloquial / internet language (e.g. suck, 'cause, cooking)
+- Register: formality, politeness, or tone nuance that changes the social meaning
+- Culture: cultural knowledge required to fully understand the expression
+
 ## Core rules
-- "original" MUST be an exact substring of the input — never paraphrase, never shorten
+- "original" MUST be an exact substring of the input — never paraphrase or shorten
+- "type" MUST be exactly one of the 7 values above — no other values allowed
+- "key" must follow the type rule above; NEVER write an English description when ${sourceLang} is not English — Vocab/Idiom/Phrasal Verb/Slang keys must be in ${sourceLang}
 - Annotate 0–3 points per line; NEVER exceed 3
-- If nothing notable, return an empty annotations array`;
+- If nothing worth teaching at this level, return an empty annotations array
+
+## Learner level: ${learnerLevel}
+${LEVEL_GUIDANCE[learnerLevel]}`;
 }
 
 /**
  * Built-in Japanese pack body — used as fallback when LinguaReel/language-packs/ja.md
- * does not exist yet. Mirrors the content written on first plugin load.
+ * does not exist yet.
  */
 const JA_PACK_BODY = `\
 ## Japanese-specific teaching guidelines
@@ -108,24 +138,23 @@ const JA_PACK_BODY = `\
 - Basic vocabulary (学校、天気、映画 and other everyday JLPT N5/N4 words)
 - Standard particle usage (は、を、が with no special nuance)
 
-**Always annotate** keigo (polite/honorific speech) — explain the politeness level and nuance specifically.
+**Always annotate** keigo (polite/honorific speech) — explain the politeness level and nuance.
 
 **Explanation style**
-- One or two sentences maximum
 - Explain the specific use in this sentence, then show how it transfers to other contexts
 - Write naturally — avoid academic grammar terminology`;
 
 /**
- * Build the final annotation system prompt.
+ * Build the annotation system prompt (base + optional pack).
+ * The already-annotated terms list is NOT included here —
+ * AnnotationPipeline appends it dynamically per call.
  *
  * @param annotationLanguage  Learning language code ('ja', 'ko', etc.) or 'custom'
  * @param customPrompt        Used verbatim when annotationLanguage === 'custom'
  * @param outputLanguage      Language for AI output (translations, explanations)
  * @param uiLanguage          Plugin UI language (fallback for outputLanguage auto)
  * @param packBody            Body of the language pack .md file (frontmatter stripped).
- *                            When provided, appended after the base prompt.
- *                            When undefined, falls back to built-in pack for 'ja',
- *                            or uses base prompt alone for other languages.
+ * @param learnerLevel        CEFR level — controls annotation density and depth.
  */
 export function getAnnotationSystemPrompt(
     annotationLanguage: string,
@@ -133,12 +162,13 @@ export function getAnnotationSystemPrompt(
     outputLanguage:     OutputLanguage = 'auto',
     uiLanguage:         UILanguage     = 'auto',
     packBody?:          string,
+    learnerLevel:       LearnerLevel   = 'B1',
 ): string {
     if (annotationLanguage === 'custom') return customPrompt;
 
     const targetLang = resolveOutputLang(outputLanguage, uiLanguage);
     const sourceLang = resolveSourceLang(annotationLanguage);
-    const base       = buildAnnotationBasePrompt(sourceLang, targetLang);
+    const base       = buildAnnotationBasePrompt(sourceLang, targetLang, learnerLevel);
 
     // User-supplied pack takes priority
     if (packBody) return base + '\n\n' + packBody;
@@ -146,7 +176,6 @@ export function getAnnotationSystemPrompt(
     // Built-in fallback for Japanese
     if (annotationLanguage === 'ja') return base + '\n\n' + JA_PACK_BODY;
 
-    // For all other languages without a pack, the base prompt is sufficient
     return base;
 }
 
@@ -198,6 +227,23 @@ export function getAnnotationMessages(
     return [
         { role: 'system', content: systemPrompt },
         { role: 'user',   content: subtitleText },
+    ];
+}
+
+/**
+ * Fallback: translation-only prompt used when full annotation fails twice.
+ * Minimal JSON output reduces the chance of parse failure on long subtitles.
+ */
+export function getTranslationOnlyMessages(
+    subtitleText: string,
+    targetLang:   string,
+): import('./client').ChatMessage[] {
+    return [
+        {
+            role: 'system',
+            content: `Translate the subtitle into ${targetLang}. Return ONLY JSON: {"translation":"..."}. No annotations needed.`,
+        },
+        { role: 'user', content: subtitleText },
     ];
 }
 

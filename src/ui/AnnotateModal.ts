@@ -3,7 +3,7 @@ import { t } from '../i18n';
 import { SubtitleParser } from '../core/SubtitleParser';
 import { AnnotationPipeline } from '../core/AnnotationPipeline';
 import { NoteGenerator } from '../core/NoteGenerator';
-import { getAnnotationSystemPrompt } from '../llm/prompts';
+import { getAnnotationSystemPrompt, resolveOutputLang } from '../llm/prompts';
 import type VLLPlugin from '../main';
 
 /**
@@ -104,11 +104,18 @@ export class AnnotateModal extends Modal {
                 this.plugin.settings.annotationSystemPrompt,
                 this.plugin.settings.outputLanguage,
                 this.plugin.settings.uiLanguage,
+                undefined,
+                this.plugin.settings.learnerLevel,
             );
 
+            const targetLang = resolveOutputLang(
+                this.plugin.settings.outputLanguage,
+                this.plugin.settings.uiLanguage,
+            );
             const pipeline = new AnnotationPipeline(this.plugin.llm);
             const result   = await pipeline.run(entries, {
                 systemPrompt,
+                targetLang,
                 signal:     this.abortController.signal,
                 batchSize:  this.plugin.settings.annotationBatchSize,
                 onProgress: (done, total) => {

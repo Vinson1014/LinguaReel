@@ -1945,6 +1945,30 @@
     text-underline-offset: 3px;
 }
 
+/* 小課堂引用原文片段：斜體灰字，與 key 之間有視覺區隔 */
+.vll-ann-quote {
+    font-style: italic;
+    color: var(--text-muted);
+    margin-right: 3px;
+}
+
+/* 標注類型標籤 [Grammar] [Idiom] 等：紫色小字 */
+.vll-ann-type {
+    color: var(--color-purple);
+    font-size: 0.8em;
+    font-weight: 600;
+    margin-right: 3px;
+}
+
+/* 例句區塊：灰色小字，左邊細線縮排 */
+.vll-ann-example {
+    color: var(--text-muted);
+    font-size: 0.88em;
+    margin-top: 5px;
+    padding-left: 10px;
+    border-left: 2px solid var(--background-modifier-border);
+}
+
 /* ── Annotate section ───────────────────────────────────────── */
 
 .vll-annotate-section {
