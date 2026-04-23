@@ -59,7 +59,7 @@ src/
 
 ## 四大功能模組
 
-1. **DictView** — LLM 查詞（reading、POS、definitions、example、notes），加入生詞本建立 .md
+1. **DictView** — LLM 查詞（reading、POS、inflection、definitions、example、notes），加入生詞本建立 .md
 2. **HighlightView** — 解析 `==text==` 和 `<mark>` 高亮，AI 翻譯（fast model）/ 深度研究（powerful model）
 3. **FlashcardView** — ts-fsrs 算法，到期佇列，4 評分鍵，interval 預覽，365 天熱圖
 4. **ShadowingView** — EME-style 可滾動字幕列表，本地/YouTube 影片，選字彈出 popup（查詞 + 高亮色塊）
@@ -90,6 +90,13 @@ src/
 - **ShadowingView 選字**：blocks container 需 `user-select: text; -webkit-user-select: text`
 - **LLM client** 用 Obsidian `requestUrl`（不是 fetch）— 支援 proxy
 - **vocab context 欄位**：傳入前剔除 `vll-ann-block` HTML，序列化時移除換行並截斷至 300 字元
+- **POS 固定枚舉**：`POS_VALUES`（15 個英文縮寫，定義在 `llm/prompts.ts`）是 LLM prompt 的強制約束，pos 不可為自由文字；`VocabEntry` 和 `DictLookupResult` 都有 `inflection?` 欄位，專門放形態資訊（如 "past tense of DEEM"、"て-form of 行く"）
+- **AnnotationType**：標注分類固定 7 種（`Grammar` / `Idiom` / `Phrasal Verb` / `Vocab` / `Slang` / `Register` / `Culture`），定義在 `types.ts`；`AnnotationItem.type` 為必填
+- **LearnerLevel**：CEFR A1–C2，存入 `VLLSettings.learnerLevel`（預設 `'B1'`），控制標注密度與說明深度
+- **`PipelineOptions.targetLang` 必填**：`AnnotationPipeline.annotate()` 需傳入輸出語言（如 `'Traditional Chinese'`），缺少時 translation-only fallback 會產生錯誤語言
+- **annotated.md 小課堂格式**：`"original" [Type] key — explanation`，加上 `<div class="vll-ann-example">` 例句；新增 CSS classes：`vll-ann-quote`、`vll-ann-type`、`vll-ann-example`
+- **YouTube embed 限制**：ShadowingView 偵測 IFrame API error 101/150，自動顯示下載按鈕；`YtDlpRunner.downloadVideo()` 下載 mp4 到 vault 並將 `![[wikilink]]` 寫入 note frontmatter
+- **孤兒 temp dir 清理**：`YtDlpRunner.sweepTempDirs()` 在 `onload()` 被呼叫，清除殘留的 `vll-*` 暫存目錄
 
 ---
 
