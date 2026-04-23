@@ -50,6 +50,7 @@ export interface VocabEntry {
     word:        string;
     reading?:    string;
     pos?:        string;
+    inflection?: string;
     definitions: string[];
     example?:            string;
     /** LLM 生成的例句翻譯（閃卡背面顯示） */

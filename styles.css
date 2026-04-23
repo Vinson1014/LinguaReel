@@ -865,6 +865,13 @@
     letter-spacing: 0.04em;
 }
 
+.vll-dict-pos-wrap {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    flex-wrap: wrap;
+}
+
 .vll-dict-pos {
     display: inline-block;
     background: color-mix(in srgb, var(--vll-accent) 14%, transparent);
@@ -876,7 +883,13 @@
     font-weight: 700;
     letter-spacing: 0.07em;
     text-transform: uppercase;
-    align-self: flex-start;
+    flex-shrink: 0;
+}
+
+.vll-dict-inflection {
+    font-size: 0.78em;
+    color: var(--text-muted);
+    font-style: italic;
 }
 
 /* 釋義 */

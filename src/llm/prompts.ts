@@ -253,6 +253,28 @@ export function getTranslationOnlyMessages(
  * Build messages for a word lookup query.
  * The response should be JSON matching DictLookupResult.
  */
+// Fixed POS enum — covers major linguistic categories across all supported languages.
+// Always in English abbreviations regardless of output language, ensuring stable UI display.
+export const POS_VALUES = [
+    'n.',        // noun, 名詞, 명사, 名词
+    'v.',        // verb, 動詞, 동사
+    'adj.',      // adjective (incl. い-adj., な-adj., 형용사)
+    'adv.',      // adverb, 副詞, 부사
+    'aux.',      // auxiliary verb, 助動詞, 조동사
+    'particle',  // particle, 助詞, 조사
+    'conj.',     // conjunction, 接続詞, 접속사
+    'pron.',     // pronoun, 代名詞, 대명사
+    'prep.',     // preposition
+    'interj.',   // interjection, 感嘆詞, 감탄사
+    'suffix',    // suffix, 接尾辞, 접미사, 어미
+    'prefix',    // prefix, 接頭辞, 접두사
+    'counter',   // counter word, 助数詞, 분류사, 量詞
+    'phr.',      // set phrase / expression
+    'other',     // anything not covered above
+] as const;
+
+export type PosValue = typeof POS_VALUES[number];
+
 export function getDictLookupMessages(
     word:           string,
     context:        string | undefined,
@@ -267,6 +289,8 @@ export function getDictLookupMessages(
         ? `Context: "${context}"`
         : 'No context provided.';
 
+    const posEnum = POS_VALUES.join(' | ');
+
     return [
         {
             role: 'system',
@@ -275,13 +299,17 @@ ${sourceLine}You are a language teacher helping a student look up a word.
 Return ONLY a JSON object (no markdown, no code fences) with these fields:
 {
   "reading": "pronunciation/reading (e.g. hiragana for Japanese, pinyin for Chinese, IPA for others; empty string if same as word)",
-  "pos": "part of speech (e.g. noun, verb, adjective suffix)",
-  "definitions": ["definition 1", "definition 2"],
+  "pos": "MUST be exactly one of: ${posEnum}",
+  "inflection": "specific grammatical form or derivation in ${replyLang} (e.g. 'past tense of DEEM', 'て-form of 行く', '-으 irregular verb'); empty string if the word is already in its base/dictionary form",
+  "definitions": ["definition 1 in ${replyLang}", "definition 2 in ${replyLang}"],
   "example": { "original": "${sourceLang ?? 'source language'} example sentence", "translation": "${replyLang} translation" },
   "notes": "brief grammar or usage note in ${replyLang} (1-2 sentences; empty string if nothing notable)"
 }
-All text values (definitions, notes, translations) must be in ${replyLang}.
-Keep definitions concise. Provide 1–3 definitions maximum.`,
+Rules:
+- "pos" MUST be exactly one of the listed values — no other values allowed
+- "inflection" is ONLY for form/derivation info; keep "pos" clean
+- All text values (definitions, notes, translations, inflection) must be in ${replyLang}
+- Keep definitions concise. Provide 1–3 definitions maximum.`,
         },
         {
             role: 'user',
@@ -294,6 +322,7 @@ Keep definitions concise. Provide 1–3 definitions maximum.`,
 export interface DictLookupResult {
     reading:     string;
     pos:         string;
+    inflection:  string;
     definitions: string[];
     example:     { original: string; translation: string };
     notes:       string;

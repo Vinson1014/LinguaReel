@@ -162,7 +162,11 @@ export class DictView extends ItemView {
             header.createEl('div', { text: data.reading, cls: 'vll-dict-reading' });
         }
         if (data.pos) {
-            header.createEl('span', { text: data.pos, cls: 'vll-dict-pos' });
+            const posWrap = header.createDiv({ cls: 'vll-dict-pos-wrap' });
+            posWrap.createEl('span', { text: data.pos, cls: 'vll-dict-pos' });
+            if (data.inflection) {
+                posWrap.createEl('span', { text: data.inflection, cls: 'vll-dict-inflection' });
+            }
         }
 
         // ── 釋義 ──
@@ -219,8 +223,9 @@ export class DictView extends ItemView {
             const now = Date.now();
             await this.plugin.vocabStorage.add({
                 word,
-                reading:             data.reading  || undefined,
-                pos:                 data.pos      || undefined,
+                reading:             data.reading    || undefined,
+                pos:                 data.pos        || undefined,
+                inflection:          data.inflection || undefined,
                 definitions:         data.definitions,
                 example:             data.example?.original    || undefined,
                 exampleTranslation:  data.example?.translation || undefined,

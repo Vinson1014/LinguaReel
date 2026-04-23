@@ -125,6 +125,7 @@ export class VocabStorage {
             word:        fm.word,
             reading:     fm.reading,
             pos:         fm.pos,
+            inflection:  fm.inflection as string | undefined,
             definitions: Array.isArray(fm.definitions) ? fm.definitions : (fm.definitions ? [fm.definitions] : []),
             example:            fm.example,
             exampleTranslation: fm.example_translation,
@@ -180,11 +181,16 @@ export class VocabStorage {
             ? `"${e.context.replace(/\n|\r/g, ' ').replace(/"/g, "'").slice(0, 300)}"`
             : '';
 
+        const inflectionQ = e.inflection
+            ? `"${e.inflection.replace(/"/g, "'")}"`
+            : '';
+
         const frontmatter = [
             '---',
             `word: ${e.word}`,
-            e.reading   ? `reading: ${e.reading}`   : '',
-            e.pos       ? `pos: ${e.pos}`           : '',
+            e.reading    ? `reading: ${e.reading}`          : '',
+            e.pos        ? `pos: ${e.pos}`                  : '',
+            inflectionQ  ? `inflection: ${inflectionQ}`     : '',
             `definitions:`,
             defsYaml || '  []',
             exampleQ    ? `example: ${exampleQ}`        : '',
@@ -208,7 +214,9 @@ export class VocabStorage {
             '',
             `# ${e.word}`,
             '',
-            e.reading ? `*${e.reading}*${e.pos ? `｜${e.pos}` : ''}` : (e.pos || ''),
+            e.reading
+                ? `*${e.reading}*${e.pos ? `｜${e.pos}` : ''}${e.inflection ? `　${e.inflection}` : ''}`
+                : `${e.pos || ''}${e.inflection ? `　${e.inflection}` : ''}`,
             '',
             e.definitions.length > 0
                 ? `**意思**：${e.definitions.join('；')}`
