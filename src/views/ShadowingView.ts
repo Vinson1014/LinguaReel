@@ -89,6 +89,9 @@ export class ShadowingView extends ItemView {
     private blockEls:         HTMLElement[]       = [];
     private selectionPopup:   HTMLElement | null  = null;
 
+    // Dictation state — persists across renderBlocks() calls
+    private dictationAttempts: Map<number, string> = new Map();
+
     constructor(leaf: WorkspaceLeaf, private plugin: VLLPlugin) {
         super(leaf);
     }
@@ -380,7 +383,8 @@ export class ShadowingView extends ItemView {
             // Original text
             const textEl    = item.createDiv({ cls: 'vll-block-text' });
             const annotated = this.annotatedMap.get(block.timestamp);
-            const plainText = block.text.replace(/<[^>]+>/g, '').trim();
+            const subtitleOnly = (block.text.split(/<div\b/)[0] ?? block.text);
+            const plainText    = subtitleOnly.replace(/<[^>]+>/g, '').replace(/\*\*/g, '').trim();
 
             if (annotated?.originalHtml) {
                 if (this.mode === 'dictation') {
@@ -401,6 +405,46 @@ export class ShadowingView extends ItemView {
             if (annotated?.annotationHtml && this.mode !== 'dictation') {
                 const annotEl = item.createDiv({ cls: 'vll-block-annotation' });
                 annotEl.innerHTML = annotated.annotationHtml;
+            }
+
+            // Dictation mode: input area below blurred text
+            if (this.mode === 'dictation') {
+                const blurEl = textEl.querySelector('.vll-sub-blurred') as HTMLElement | null;
+
+                const area     = item.createDiv({ cls: 'vll-dictation-area' });
+                const inputEl  = area.createEl('input', { cls: 'vll-dictation-input' });
+                inputEl.type        = 'text';
+                inputEl.placeholder = t('shadowing.dictationPlaceholder');
+
+                const prevAttempt = this.dictationAttempts.get(i);
+                if (prevAttempt !== undefined) inputEl.value = prevAttempt;
+
+                const actions  = area.createDiv({ cls: 'vll-dictation-actions' });
+                const checkBtn = actions.createEl('button', {
+                    text: t('shadowing.checkAnswer'),
+                    cls:  'vll-btn',
+                });
+                const revealBtn = actions.createEl('button', {
+                    text: t('shadowing.reveal'),
+                    cls:  'vll-btn vll-dictation-reveal-btn',
+                });
+
+                const resultEl = area.createDiv({ cls: 'vll-dictation-result' });
+
+                // Restore previous result if user already submitted this block
+                if (prevAttempt !== undefined) {
+                    this.renderDiff(plainText, prevAttempt, resultEl);
+                }
+
+                const submit = () => this.submitDictation(i, plainText, inputEl, resultEl);
+                checkBtn.addEventListener('click', submit);
+                inputEl.addEventListener('keydown', (e: KeyboardEvent) => {
+                    if (e.key === 'Enter') { e.preventDefault(); submit(); }
+                });
+
+                revealBtn.addEventListener('click', () => {
+                    blurEl?.addClass('is-revealed');
+                });
             }
         }
     }
@@ -559,6 +603,11 @@ export class ShadowingView extends ItemView {
         }
         this.activeIndex = idx;
 
+        // Dictation mode: auto-pause on each new line the user hasn't answered yet
+        if (this.mode === 'dictation' && idx >= 0 && !this.dictationAttempts.has(idx)) {
+            this.pauseVideo();
+        }
+
         // Activate new
         if (idx >= 0) {
             const el = this.blockEls[idx];
@@ -566,6 +615,10 @@ export class ShadowingView extends ItemView {
                 el.addClass('active');
                 // Smooth-scroll the block list so the active item is visible
                 el.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+                // Focus the input so the user can type immediately
+                if (this.mode === 'dictation') {
+                    (el.querySelector('.vll-dictation-input') as HTMLInputElement | null)?.focus();
+                }
             }
         }
     }
@@ -750,6 +803,40 @@ export class ShadowingView extends ItemView {
             btn.toggleClass('is-active', ([0.8, 1.0, 1.25] as PlaybackSpeed[])[i] === s));
     }
 
+    // ─── Dictation ────────────────────────────────────────────────────────────
+
+    private submitDictation(
+        blockIdx: number,
+        original: string,
+        inputEl:  HTMLInputElement,
+        resultEl: HTMLElement,
+    ): void {
+        const attempt = inputEl.value.trim();
+        this.dictationAttempts.set(blockIdx, attempt);
+        this.renderDiff(original, attempt, resultEl);
+    }
+
+    private renderDiff(original: string, attempt: string, container: HTMLElement): void {
+        container.empty();
+        if (!attempt) return;
+
+        const isCJK  = /[　-鿿가-힯一-鿿]/.test(original);
+        const norm   = (s: string) => s.toLowerCase().trim();
+        const split  = (s: string): string[] => isCJK
+            ? Array.from(norm(s).replace(/\s+/g, ''))
+            : norm(s).split(/\s+/).filter(Boolean);
+
+        const origTokens = split(original);
+        const tryTokens  = split(attempt);
+        const ops        = diffTokens(origTokens, tryTokens);
+        const sep        = isCJK ? '' : ' ';
+
+        ops.forEach((op, k) => {
+            if (k > 0 && !isCJK) container.appendText(sep);
+            container.createEl('span', { text: op.text, cls: `vll-diff-${op.type}` });
+        });
+    }
+
     private destroyPlayer(): void {
         if (this.ytTimer !== null) { window.clearInterval(this.ytTimer); this.ytTimer = null; }
         try { this.ytPlayer?.destroy(); } catch { /* ignore */ }
@@ -776,4 +863,34 @@ export class ShadowingView extends ItemView {
 
 function boldToStrong(s: string): string {
     return s.replace(/\*\*([^*]+)\*\*/g, '<strong>$1</strong>');
+}
+
+// ─── Diff helpers ─────────────────────────────────────────────────────────────
+
+type DiffOp = { type: 'ok' | 'miss' | 'wrong'; text: string };
+
+function diffTokens(orig: string[], attempt: string[]): DiffOp[] {
+    const m = orig.length, n = attempt.length;
+    const dp: number[][] = Array.from({ length: m + 1 }, () => new Array(n + 1).fill(0));
+    for (let i = 1; i <= m; i++)
+        for (let j = 1; j <= n; j++)
+            dp[i]![j] = orig[i - 1] === attempt[j - 1]
+                ? dp[i - 1]![j - 1]! + 1
+                : Math.max(dp[i - 1]![j]!, dp[i]![j - 1]!);
+
+    const ops: DiffOp[] = [];
+    let i = m, j = n;
+    while (i > 0 || j > 0) {
+        if (i > 0 && j > 0 && orig[i - 1] === attempt[j - 1]) {
+            ops.unshift({ type: 'ok', text: orig[i - 1]! });
+            i--; j--;
+        } else if (j > 0 && (i === 0 || dp[i]![j - 1]! >= dp[i - 1]![j]!)) {
+            ops.unshift({ type: 'wrong', text: attempt[j - 1]! });
+            j--;
+        } else {
+            ops.unshift({ type: 'miss', text: orig[i - 1]! });
+            i--;
+        }
+    }
+    return ops;
 }

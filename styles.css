@@ -1480,6 +1480,66 @@
     user-select: none;
     transition: filter 0.3s;
 }
+.vll-sub-blurred.is-revealed {
+    filter: none;
+    user-select: text;
+    -webkit-user-select: text;
+}
+
+/* ── Dictation area ─────────────────────────────────────────── */
+
+.vll-dictation-area {
+    margin-top: 8px;
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+
+.vll-dictation-input {
+    width: 100%;
+    padding: 6px 10px;
+    border: 1px solid var(--background-modifier-border);
+    border-radius: 6px;
+    background: var(--background-primary);
+    color: var(--text-normal);
+    font-size: 0.95em;
+    outline: none;
+    box-sizing: border-box;
+}
+.vll-dictation-input:focus {
+    border-color: var(--vll-accent);
+    box-shadow: 0 0 0 2px color-mix(in srgb, var(--vll-accent) 20%, transparent);
+}
+
+.vll-dictation-actions {
+    display: flex;
+    gap: 6px;
+}
+.vll-dictation-reveal-btn {
+    margin-left: auto;
+    color: var(--text-muted);
+    font-size: 0.85em;
+}
+
+.vll-dictation-result {
+    min-height: 1.4em;
+    font-size: 0.95em;
+    line-height: 1.6;
+    padding: 2px 0;
+    word-break: break-word;
+}
+
+/* Diff token colours */
+.vll-diff-ok    { color: var(--color-green); }
+.vll-diff-miss  {
+    color: var(--color-orange);
+    text-decoration: underline;
+    text-underline-offset: 3px;
+}
+.vll-diff-wrong {
+    color: var(--color-red);
+    text-decoration: line-through;
+}
 
 /* ── Scrollable blocks list ─────────────────────────────────── */
 

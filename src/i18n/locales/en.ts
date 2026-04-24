@@ -205,6 +205,7 @@ const en = {
         checkAnswer: 'Check',
         correct:     'Correct!',
         tryAgain:    'Try again',
+        reveal:      'Reveal',
         // 標註功能
         subtitleCount:    '{count} subtitle lines loaded',
         noSubtitles:      'No [MM:SS] subtitle lines found in this note',

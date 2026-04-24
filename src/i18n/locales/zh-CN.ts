@@ -200,6 +200,7 @@ const zhCN: Translations = {
         checkAnswer:   '对答案',
         correct:       '正确！',
         tryAgain:      '再试一次',
+        reveal:        '显示原文',
         subtitleCount:    '已加载 {count} 条字幕',
         noSubtitles:      '此笔记中找不到 [MM:SS] 格式的字幕行',
         noVideoSource:    '笔记 frontmatter 中找不到视频来源',

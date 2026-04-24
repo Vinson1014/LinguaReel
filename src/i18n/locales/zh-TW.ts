@@ -200,6 +200,7 @@ const zhTW: Translations = {
         checkAnswer:   '對答案',
         correct:       '正確！',
         tryAgain:      '再試一次',
+        reveal:        '顯示原文',
         subtitleCount:    '已載入 {count} 條字幕',
         noSubtitles:      '此筆記中找不到 [MM:SS] 格式的字幕行',
         noVideoSource:    '筆記 frontmatter 中找不到影片來源',
