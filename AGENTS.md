@@ -62,7 +62,7 @@ src/
 1. **DictView** — LLM 查詞（reading、POS、inflection、definitions、example、notes），加入生詞本建立 .md
 2. **HighlightView** — 解析 `==text==` 和 `<mark>` 高亮，AI 翻譯（fast model）/ 深度研究（powerful model）
 3. **FlashcardView** — ts-fsrs 算法，到期佇列，4 評分鍵，interval 預覽，365 天熱圖
-4. **ShadowingView** — EME-style 可滾動字幕列表，本地/YouTube 影片，選字彈出 popup（查詞 + 高亮色塊）
+4. **ShadowingView** — EME-style 可滾動字幕列表，本地/YouTube 影片，選字彈出 popup（查詞 + 高亮色塊）；聽寫模式（Dictation）：自動暫停、逐行輸入、LCS diff 比對結果
 
 ---
 
@@ -97,6 +97,7 @@ src/
 - **annotated.md 小課堂格式**：`"original" [Type] key — explanation`，加上 `<div class="vll-ann-example">` 例句；新增 CSS classes：`vll-ann-quote`、`vll-ann-type`、`vll-ann-example`
 - **YouTube embed 限制**：ShadowingView 偵測 IFrame API error 101/150，自動顯示下載按鈕；`YtDlpRunner.downloadVideo()` 下載 mp4 到 vault 並將 `![[wikilink]]` 寫入 note frontmatter
 - **孤兒 temp dir 清理**：`YtDlpRunner.sweepTempDirs()` 在 `onload()` 被呼叫，清除殘留的 `vll-*` 暫存目錄
+- **ShadowingView 聽寫模式**：`ShadowingMode = 'shadowing' | 'dictation'`；dictation 模式下 `onTimeUpdate` 切換 active block 時自動暫停（已提交的行跳過）並 focus input；`dictationAttempts: Map<number, string>` 跨 `renderBlocks()` 重繪保留答案；`plainText` 必須先 split at `/<div\b/` 切掉 annotation block、再 strip `**`，才能用於 diff（否則 annotation 文字混入原文）；diff 用 LCS word-level（非 CJK）或 char-level（CJK），結果 class：`vll-diff-ok`（綠）/ `vll-diff-miss`（橘+底線）/ `vll-diff-wrong`（紅+刪除線）
 
 ---
 
