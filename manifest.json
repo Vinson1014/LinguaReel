@@ -1,7 +1,7 @@
 {
 	"id": "lingua-reel",
 	"name": "LinguaReel",
-	"version": "0.2.1",
+	"version": "0.3.0",
 	"minAppVersion": "1.0.0",
 	"description": "AI-powered language learning plugin for Obsidian — video shadowing with synced subtitles, LLM dictionary, FSRS flashcards, and AI annotation pipeline.",
 	"author": "Vinson",
